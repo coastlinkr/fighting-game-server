@@ -1586,6 +1586,72 @@
             // Then load them
             // window.game.loadCharacterSprite('player1', GameAssets.characters.ryu_idle);
         }
+        // Initialize the game when page loads
+            checkForLobbyJoin() {
+                const hash = window.location.hash.substring(1);
+                if (hash && hash.match(/^\d{4}$/)) {
+                    if (this.connected) {
+                        this.joinLobby(hash);
+                    } else {
+                        this.socket.on('connect', () => {
+                            this.joinLobby(hash);
+                        });
+                    }
+                }
+            }
+
+            createLobby() {
+                if (!this.connected) {
+                    alert('Not connected to server. Please refresh and try again.');
+                    return;
+                }
+
+                this.gameState = 'lobby';
+                document.getElementById('menuContent').style.display = 'none';
+                document.getElementById('lobbyContent').style.display = 'block';
+                document.getElementById('connectionStatus').style.display = 'block';
+                
+                document.getElementById('lobbyInfo').innerHTML = `
+                    <div style="font-size: 4vh; margin: 2vh 0;">Creating Lobby...</div>
+                    <div style="font-size: 2vh; color: #BBB;">Please wait...</div>
+                `;
+                
+                this.socket.emit('create_lobby', {
+                    playerId: this.playerId
+                });
+            }
+
+            startPracticeMode() {
+                this.gameState = 'fighting';
+                this.isMultiplayer = false;
+                this.initializePlayers();
+                document.getElementById('gameOverlay').style.display = 'none';
+                this.gameTime = 60;
+            }
+        }
+
+        // Initialize game when page loads
+        let game;
+        window.addEventListener('load', () => {
+            game = new FightingGameEngine();
+        });
+
+        // Global functions for button clicks
+        function createLobby() {
+            if (game) game.createLobby();
+        }
+
+        function startPracticeMode() {
+            if (game) game.startPracticeMode();
+        }
+
+        function toggleReady() {
+            if (game) game.toggleReady();
+        }
+
+        function backToMenu() {
+            if (game) game.backToMenu();
+        }
     </script>
 </body>
 </html>
