@@ -11,7 +11,6 @@
             box-sizing: border-box;
             touch-action: manipulation;
         }
-
         body {
             background: #000;
             overflow: hidden;
@@ -19,462 +18,304 @@
             height: 100vh;
             height: 100dvh;
         }
-
-        /* Force landscape orientation */
-        @media screen and (orientation: portrait) {
-            body::before {
-                content: "Please rotate your device to landscape mode";
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 24px;
-                text-align: center;
-                z-index: 9999;
-            }
-        }
-
-        #gameContainer {
-            position: relative;
+        canvas {
+            display: block;
+            background: linear-gradient(180deg, #87CEEB 0%, #98FB98 100%);
+            touch-action: none;
             width: 100vw;
             height: 100vh;
             height: 100dvh;
-            background: linear-gradient(135deg, #1e3c77 0%, #2a5298 100%);
         }
-
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%);
-        }
-
-        #ui {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        #healthBars {
-            position: absolute;
-            top: 2vh;
+        .controls {
+            position: fixed;
+            bottom: 2vh;
             left: 2vw;
             right: 2vw;
-            height: 5vh;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-end;
             pointer-events: none;
+            z-index: 1000;
         }
-
-        .healthBar {
-            width: 45%;
-            height: 3vh;
-            background: #333;
-            border: 2px solid #fff;
-            border-radius: 1.5vh;
-            overflow: hidden;
-        }
-
-        .healthFill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff0000 0%, #ffff00 50%, #00ff00 100%);
-            transition: width 0.3s ease;
-        }
-
-        #timer {
-            position: absolute;
-            top: 2vh;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 4vh;
-            font-weight: bold;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-        }
-
-        #controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 35vh;
-            display: flex;
-            justify-content: space-between;
-            padding: 2vh 3vw;
-            pointer-events: auto;
-        }
-
-        .controlGroup {
+        .control-group {
             display: flex;
             flex-direction: column;
-            gap: 2vh;
+            gap: 1vh;
+            pointer-events: auto;
         }
-
-        /* Virtual Joystick */
-        .joystickContainer {
-            position: relative;
-            width: 15vh;
-            height: 15vh;
-        }
-
-        .joystickBase {
-            position: absolute;
-            width: 15vh;
-            height: 15vh;
-            background: rgba(0, 0, 0, 0.3);
-            border: 3px solid rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
+        .move-controls {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            gap: 1vw;
         }
-
-        .joystickKnob {
-            position: absolute;
-            width: 6vh;
-            height: 6vh;
+        .action-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1vh;
+        }
+        .control-btn {
+            width: 15vw;
+            height: 15vw;
+            min-width: 60px;
+            min-height: 60px;
+            max-width: 80px;
+            max-height: 80px;
+            border: none;
+            border-radius: 50%;
             background: rgba(255, 255, 255, 0.8);
-            border: 2px solid rgba(255, 255, 255, 1);
-            border-radius: 50%;
-            transition: all 0.1s ease;
-            transform: translate(-50%, -50%);
-            left: 50%;
-            top: 50%;
-        }
-
-        /* Classic Fighting Game Buttons */
-        .actionButtons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 2vh 3vw;
-            align-items: center;
-        }
-
-        .fightBtn {
-            width: 8vh;
-            height: 8vh;
-            border-radius: 50%;
-            color: white;
+            color: #333;
+            font-size: 4vw;
             font-weight: bold;
-            font-size: 3vh;
+            touch-action: manipulation;
+            user-select: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            user-select: none;
-            transition: all 0.1s ease;
-            border: 3px solid;
-            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.1s;
         }
-
-        /* SNES/Genesis button colors */
-        .fightBtn.btn-x {
-            background: linear-gradient(145deg, #4169E1, #1E90FF);
-            border-color: #0000CD;
+        .control-btn:active {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
-
-        .fightBtn.btn-y {
-            background: linear-gradient(145deg, #32CD32, #228B22);
-            border-color: #006400;
-        }
-
-        .fightBtn.btn-a {
-            background: linear-gradient(145deg, #FF6347, #DC143C);
-            border-color: #8B0000;
-        }
-
-        .fightBtn.btn-b {
-            background: linear-gradient(145deg, #FFD700, #FFA500);
-            border-color: #FF8C00;
-        }
-
-        .fightBtn:active,
-        .fightBtn.pressed {
-            transform: scale(0.9);
-            box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
-        }
-
-        .fightBtn::after {
-            content: attr(data-label);
-            position: absolute;
-            bottom: -3vh;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 1.5vh;
+        .move-btn {
+            background: rgba(100, 149, 237, 0.8);
             color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
-
-        #connectionStatus {
-            position: absolute;
-            top: 8vh;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 1vh 2vw;
-            background: rgba(0, 0, 0, 0.7);
+        .move-btn:active {
+            background: rgba(100, 149, 237, 1);
+        }
+        .special-btn {
+            background: rgba(255, 69, 0, 0.8);
             color: white;
-            border-radius: 2vh;
-            font-size: 2vh;
+            font-size: 3vw;
         }
-
-        .connected { color: #00ff00; }
-        .disconnected { color: #ff0000; }
-        .waiting { color: #ffff00; }
-
-        #gameOverlay {
-            position: absolute;
+        .special-btn:active {
+            background: rgba(255, 69, 0, 1);
+        }
+        .game-overlay {
+            position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             background: rgba(0, 0, 0, 0.9);
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            z-index: 2000;
             color: white;
             text-align: center;
-            z-index: 20;
         }
-
-        #gameOverlay h1 {
-            font-size: 6vh;
-            margin-bottom: 3vh;
+        .menu-content, .lobby-content {
+            max-width: 90vw;
+            padding: 4vh 2vw;
+        }
+        .menu-title {
+            font-size: 8vw;
+            font-weight: bold;
+            margin-bottom: 6vh;
+            color: #FFD700;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         }
-
-        #gameOverlay button {
-            padding: 2vh 4vw;
-            font-size: 3vh;
-            background: #007bff;
-            color: white;
+        .menu-btn {
+            display: block;
+            width: 80vw;
+            max-width: 400px;
+            padding: 4vh 4vw;
+            margin: 3vh auto;
             border: none;
-            border-radius: 3vh;
-            cursor: pointer;
-            margin: 1vh;
-            transition: background 0.3s ease;
-        }
-
-        #gameOverlay button:hover {
-            background: #0056b3;
-        }
-
-        #qrCode {
-            margin: 3vh 0;
-            padding: 3vh;
-            background: white;
             border-radius: 2vh;
-        }
-
-        #lobbyInfo {
-            font-size: 3vh;
-            margin: 3vh 0;
-        }
-
-        #readyButtons {
-            display: flex;
-            gap: 3vw;
-            margin-top: 3vh;
-        }
-
-        .readyBtn {
-            padding: 3vh 6vw;
-            font-size: 3vh;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            font-size: 5vw;
             font-weight: bold;
-            border: none;
-            border-radius: 4vh;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
-
-        .readyBtn.ready {
-            background: #28a745;
-            color: white;
+        .menu-btn:hover {
+            background: linear-gradient(45deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
         }
-
-        .readyBtn.not-ready {
-            background: #dc3545;
-            color: white;
+        .menu-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
-
-        /* Scalable Fighter Characters */
-        .fighter {
-            position: absolute;
+        .secondary-btn {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+        }
+        .secondary-btn:hover {
+            background: linear-gradient(45deg, #1976D2, #2196F3);
+        }
+        .danger-btn {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+        }
+        .danger-btn:hover {
+            background: linear-gradient(45deg, #d32f2f, #f44336);
+        }
+        .lobby-info {
+            font-size: 4vh;
+            margin: 4vh 0;
+            padding: 2vh;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 1vh;
-            transition: all 0.1s ease;
-            background-size: cover;
-            background-position: center;
+            border: 2px solid #FFD700;
         }
-
-        .fighter.player1 {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-            border: 2px solid #ffffff;
+        .ready-status {
+            font-size: 3vh;
+            margin: 2vh 0;
+            padding: 1vh;
+            border-radius: 1vh;
         }
-
-        .fighter.player2 {
-            background: linear-gradient(45deg, #4834d4, #686de0);
-            border: 2px solid #ffffff;
+        .ready-true {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
         }
-
-        .fighter.attacking {
-            animation: attackFlash 0.2s ease-out;
+        .ready-false {
+            background: rgba(244, 67, 54, 0.3);
+            color: #f44336;
         }
-
-        .fighter.ducking {
-            transition: all 0.2s ease;
+        .connection-status {
+            position: fixed;
+            top: 2vh;
+            right: 2vw;
+            padding: 1vh 2vw;
+            border-radius: 1vh;
+            font-size: 3vw;
+            font-weight: bold;
+            z-index: 3000;
         }
-
-        @keyframes attackFlash {
-            0% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
-            50% { box-shadow: 0 0 3vh rgba(255, 255, 255, 0.8); }
-            100% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+        .connected {
+            background: rgba(76, 175, 80, 0.8);
+            color: white;
         }
-
-        .powerup {
-            position: absolute;
-            background: radial-gradient(circle, #ffd700, #ff8c00);
-            border-radius: 50%;
-            animation: float 2s ease-in-out infinite;
+        .disconnected {
+            background: rgba(244, 67, 54, 0.8);
+            color: white;
         }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-1vh); }
-        }
-
-        .particle {
-            position: absolute;
-            background: #fff;
-            border-radius: 50%;
+        .game-hud {
+            position: fixed;
+            top: 2vh;
+            left: 2vw;
+            right: 2vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 1000;
             pointer-events: none;
-            animation: particle 0.5s ease-out forwards;
         }
-
-        @keyframes particle {
-            0% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: scale(0) translate(var(--dx), var(--dy));
-            }
-        }
-
-        @media screen and (orientation: landscape) {
-            body::before {
-                display: none;
-            }
-        }
-
-        /* Special move indicators */
-        .specialMeter {
-            position: absolute;
-            bottom: 8vh;
-            width: 20vw;
-            height: 1vh;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid white;
-            border-radius: 0.5vh;
+        .health-bar {
+            width: 40vw;
+            height: 3vh;
+            background: rgba(244, 67, 54, 0.8);
+            border: 2px solid white;
+            border-radius: 1vh;
             overflow: hidden;
         }
-
-        .specialMeter.p1 { left: 2vw; }
-        .specialMeter.p2 { right: 2vw; }
-
-        .specialFill {
+        .health-fill {
             height: 100%;
-            background: linear-gradient(90deg, #ff0080, #8000ff);
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
             transition: width 0.3s ease;
-            width: 0%;
+        }
+        .timer {
+            font-size: 6vw;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1vh 2vw;
+            border-radius: 1vh;
+        }
+        @media (max-height: 500px) {
+            .control-btn {
+                width: 12vw;
+                height: 12vw;
+                font-size: 3vw;
+            }
+            .special-btn {
+                font-size: 2.5vw;
+            }
+        }
+        @media (orientation: landscape) and (max-height: 500px) {
+            .controls {
+                bottom: 1vh;
+            }
+            .control-btn {
+                width: 10vh;
+                height: 10vh;
+                font-size: 2.5vh;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Game HUD -->
+    <div class="game-hud" id="gameHud" style="display: none;">
+        <div>
+            <div class="health-bar">
+                <div class="health-fill" id="player1Health" style="width: 100%;"></div>
+            </div>
+            <div style="color: white; font-size: 3vw; margin-top: 1vh;">Player 1</div>
+        </div>
+        <div class="timer" id="gameTimer">60</div>
+        <div>
+            <div class="health-bar">
+                <div class="health-fill" id="player2Health" style="width: 100%;"></div>
+            </div>
+            <div style="color: white; font-size: 3vw; margin-top: 1vh;">Player 2</div>
+        </div>
+    </div>
+    
+    <!-- Touch Controls -->
+    <div class="controls" id="touchControls" style="display: none;">
+        <div class="control-group">
+            <div class="move-controls">
+                <button class="control-btn move-btn" id="leftBtn">←</button>
+                <button class="control-btn move-btn" id="rightBtn">→</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="action-controls">
+                <button class="control-btn" id="punchBtn">👊</button>
+                <button class="control-btn" id="kickBtn">🦵</button>
+                <button class="control-btn special-btn" id="specialBtn">⚡</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Game Overlay (Menu/Lobby) -->
+    <div class="game-overlay" id="gameOverlay">
+        <!-- Main Menu -->
+        <div class="menu-content" id="menuContent">
+            <h1 class="menu-title">MOBILE FIGHTER</h1>
+            <button class="menu-btn" onclick="createLobby()">🌐 Online Multiplayer</button>
+            <button class="menu-btn secondary-btn" onclick="startPracticeMode()">🥊 Practice Mode</button>
+        </div>
         
-        <div id="ui">
-            <div id="healthBars">
-                <div class="healthBar">
-                    <div class="healthFill" id="p1Health" style="width: 100%;"></div>
-                </div>
-                <div class="healthBar">
-                    <div class="healthFill" id="p2Health" style="width: 100%;"></div>
-                </div>
+        <!-- Lobby Screen -->
+        <div class="lobby-content" id="lobbyContent" style="display: none;">
+            <h2 class="menu-title" style="font-size: 6vw;">LOBBY</h2>
+            <div class="lobby-info" id="lobbyInfo">
+                <div style="font-size: 4vh; margin: 2vh 0;">Connecting...</div>
             </div>
-            
-            <div id="timer">60</div>
-            
-            <!-- Special move meters -->
-            <div class="specialMeter p1">
-                <div class="specialFill" id="p1Special"></div>
+            <div class="ready-status" id="readyStatus">
+                <div id="player1Ready">Player 1: Not Ready</div>
+                <div id="player2Ready">Player 2: Waiting...</div>
             </div>
-            <div class="specialMeter p2">
-                <div class="specialFill" id="p2Special"></div>
-            </div>
-            
-            <div id="connectionStatus" class="waiting" style="display: none;">
-                Waiting for opponent...
-            </div>
+            <button class="menu-btn" id="readyBtn" onclick="toggleReady()" style="display: none;">Ready Up!</button>
+            <button class="menu-btn danger-btn" onclick="backToMenu()">← Back to Menu</button>
         </div>
-
-        <div id="controls">
-            <div class="controlGroup">
-                <div class="joystickContainer">
-                    <div class="joystickBase">
-                        <div class="joystickKnob" id="joystickKnob"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="controlGroup">
-                <div class="actionButtons">
-                    <!-- Top row: Light attacks -->
-                    <div class="fightBtn btn-x" data-action="light_punch" data-label="LP">X</div>
-                    <div class="fightBtn btn-y" data-action="light_kick" data-label="LK">Y</div>
-                    <!-- Bottom row: Heavy attacks -->
-                    <div class="fightBtn btn-a" data-action="heavy_punch" data-label="HP">A</div>
-                    <div class="fightBtn btn-b" data-action="heavy_kick" data-label="HK">B</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="gameOverlay">
-            <h1>Mobile Fighter</h1>
-            <div id="menuContent">
-                <p>Choose your battle mode!</p>
-                <button onclick="createLobby()">Create Lobby</button>
-                <button onclick="startPracticeMode()">Practice Mode</button>
-                <div style="margin-top: 3vh; font-size: 2vh; color: #BBB;">
-                    <p>To join a lobby, visit: yoursite.html#1234</p>
-                    <p>Replace 1234 with the 4-digit lobby code</p>
-                </div>
-            </div>
-            <div id="lobbyContent" style="display: none;">
-                <div id="lobbyInfo">Lobby Created!</div>
-                <p style="font-size: 2.5vh; margin: 2vh 0;">Share this link or lobby code with your opponent!</p>
-                <div id="playersStatus">
-                    <p>Players: <span id="playerCount">1/2</span></p>
-                </div>
-                <div id="readyButtons" style="display: none;">
-                    <button class="readyBtn not-ready" onclick="toggleReady()">Ready?</button>
-                    <p id="readyStatus">Waiting for players to be ready...</p>
-                </div>
-                <button onclick="backToMenu()">Back to Menu</button>
-            </div>
-        </div>
+    </div>
+    
+    <!-- Connection Status -->
+    <div class="connection-status disconnected" id="connectionStatus" style="display: none;">
+        Connecting...
     </div>
 
     <!-- Socket.io Client Library -->
@@ -485,1108 +326,224 @@
             constructor() {
                 this.canvas = document.getElementById('gameCanvas');
                 this.ctx = this.canvas.getContext('2d');
-                this.gameState = 'menu';
-                this.players = [];
-                this.powerups = [];
-                this.particles = [];
-                this.gameTime = 60;
-                this.isMultiplayer = false;
-                this.playerId = Math.random().toString(36).substr(2, 9);
-                this.lobbyId = null;
-                this.isHost = false;
-                this.playerReady = false;
-                this.opponentReady = false;
-                
-                // Screen scaling
-                this.scale = {
-                    width: window.innerWidth,
-                    height: window.innerHeight,
-                    ratio: window.devicePixelRatio || 1
-                };
-                
-                // Fighter dimensions (percentage of screen)
-                this.fighterConfig = {
-                    width: 0.08,  // 8% of screen width
-                    height: 0.25, // 25% of screen height
-                    groundLevel: 0.65 // 65% down from top
-                };
-                
-                // Input state tracking for classic fighting games
-                this.inputState = {
-                    left: false,
-                    right: false,
-                    up: false,
-                    down: false,
-                    light_punch: false,
-                    light_kick: false,
-                    heavy_punch: false,
-                    heavy_kick: false
-                };
-
-                // Motion input buffer for special moves
-                this.motionBuffer = [];
-                this.motionBufferTime = 1000; // 1 second buffer
-
-                // Joystick state
-                this.joystick = {
-                    active: false,
-                    startX: 0,
-                    startY: 0,
-                    currentX: 0,
-                    currentY: 0,
-                    centerX: 0,
-                    centerY: 0,
-                    maxDistance: this.scale.height * 0.06 // 6% of screen height
-                };
-                
-                this.initializeCanvas();
-                this.setupControls();
-                this.setupJoystick();
+                this.setupCanvas();
                 this.setupNetworking();
-                this.gameLoop();
+                this.setupEventListeners();
                 
-                // Update scaling on resize
-                window.addEventListener('resize', () => this.updateScale());
-                window.addEventListener('orientationchange', () => {
-                    setTimeout(() => this.updateScale(), 100);
-                });
-            }
-
-            updateScale() {
-                this.scale.width = window.innerWidth;
-                this.scale.height = window.innerHeight;
-                this.joystick.maxDistance = this.scale.height * 0.06;
-                this.resizeCanvas();
-                
-                // Update fighter positions if in game
-                if (this.gameState === 'fighting') {
-                    this.players.forEach(player => {
-                        this.updatePlayerScale(player);
-                    });
-                }
-            }
-
-            updatePlayerScale(player) {
-                const fighterWidth = this.scale.width * this.fighterConfig.width;
-                const fighterHeight = this.scale.height * this.fighterConfig.height;
-                const groundY = this.scale.height * this.fighterConfig.groundLevel;
-                
-                // Keep relative position but scale to new screen size
-                player.scaledWidth = fighterWidth;
-                player.scaledHeight = player.ducking ? fighterHeight * 0.5 : fighterHeight;
-                player.groundY = groundY;
-                
-                // Ensure player stays in bounds
-                player.x = Math.max(0, Math.min(this.scale.width - fighterWidth, player.x));
-                if (player.onGround) {
-                    player.y = groundY;
-                }
-            }
-
-            initializeCanvas() {
-                this.resizeCanvas();
-            }
-
-            resizeCanvas() {
-                const rect = this.canvas.getBoundingClientRect();
-                this.canvas.width = rect.width * this.scale.ratio;
-                this.canvas.height = rect.height * this.scale.ratio;
-                this.ctx.scale(this.scale.ratio, this.scale.ratio);
-                this.canvas.style.width = rect.width + 'px';
-                this.canvas.style.height = rect.height + 'px';
-            }
-
-            setupJoystick() {
-                const joystickBase = document.querySelector('.joystickBase');
-                const joystickKnob = document.getElementById('joystickKnob');
-                
-                const updateJoystickCenter = () => {
-                    const rect = joystickBase.getBoundingClientRect();
-                    this.joystick.centerX = rect.left + rect.width / 2;
-                    this.joystick.centerY = rect.top + rect.height / 2;
-                };
-                
-                updateJoystickCenter();
-                window.addEventListener('resize', updateJoystickCenter);
-
-                const handleJoystickStart = (clientX, clientY) => {
-                    this.joystick.active = true;
-                    updateJoystickCenter();
-                };
-
-                const handleJoystickMove = (clientX, clientY) => {
-                    if (!this.joystick.active) return;
-
-                    const deltaX = clientX - this.joystick.centerX;
-                    const deltaY = clientY - this.joystick.centerY;
-                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-                    if (distance <= this.joystick.maxDistance) {
-                        this.joystick.currentX = deltaX;
-                        this.joystick.currentY = deltaY;
-                    } else {
-                        const angle = Math.atan2(deltaY, deltaX);
-                        this.joystick.currentX = Math.cos(angle) * this.joystick.maxDistance;
-                        this.joystick.currentY = Math.sin(angle) * this.joystick.maxDistance;
-                    }
-
-                    joystickKnob.style.transform = `translate(calc(-50% + ${this.joystick.currentX}px), calc(-50% + ${this.joystick.currentY}px))`;
-                    this.updateInputFromJoystick();
-                };
-
-                const handleJoystickEnd = () => {
-                    this.joystick.active = false;
-                    this.joystick.currentX = 0;
-                    this.joystick.currentY = 0;
-                    
-                    joystickKnob.style.transform = 'translate(-50%, -50%)';
-                    
-                    // Clear directional inputs and add to motion buffer
-                    this.clearDirectionalInputs();
-                };
-
-                // Touch events
-                joystickBase.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    handleJoystickStart(touch.clientX, touch.clientY);
-                });
-
-                joystickBase.addEventListener('touchmove', (e) => {
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    handleJoystickMove(touch.clientX, touch.clientY);
-                });
-
-                joystickBase.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    handleJoystickEnd();
-                });
-
-                // Mouse events
-                joystickBase.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    handleJoystickStart(e.clientX, e.clientY);
-                });
-
-                document.addEventListener('mousemove', (e) => {
-                    handleJoystickMove(e.clientX, e.clientY);
-                });
-
-                document.addEventListener('mouseup', () => {
-                    handleJoystickEnd();
-                });
-            }
-
-            updateInputFromJoystick() {
-                const threshold = this.joystick.maxDistance * 0.4;
-                
-                // Reset directional inputs
-                this.inputState.left = false;
-                this.inputState.right = false;
-                this.inputState.up = false;
-                this.inputState.down = false;
-
-                // Set new directional inputs and add to motion buffer
-                if (this.joystick.currentX < -threshold) {
-                    this.inputState.left = true;
-                    this.addToMotionBuffer('left');
-                } else if (this.joystick.currentX > threshold) {
-                    this.inputState.right = true;
-                    this.addToMotionBuffer('right');
-                }
-
-                if (this.joystick.currentY < -threshold) {
-                    this.inputState.up = true;
-                    this.addToMotionBuffer('up');
-                } else if (this.joystick.currentY > threshold) {
-                    this.inputState.down = true;
-                    this.addToMotionBuffer('down');
-                }
-            }
-
-            clearDirectionalInputs() {
-                this.inputState.left = false;
-                this.inputState.right = false;
-                this.inputState.up = false;
-                this.inputState.down = false;
-            }
-
-            addToMotionBuffer(direction) {
-                const now = Date.now();
-                this.motionBuffer.push({ direction, time: now });
-                
-                // Clean old inputs
-                this.motionBuffer = this.motionBuffer.filter(input => 
-                    now - input.time < this.motionBufferTime
-                );
-            }
-
-            setupControls() {
-                const actionButtons = document.querySelectorAll('.fightBtn');
-                
-                actionButtons.forEach(btn => {
-                    const action = btn.dataset.action;
-                    if (!action) return;
-
-                    const handlePress = (e) => {
-                        e.preventDefault();
-                        this.inputState[action] = true;
-                        btn.classList.add('pressed');
-                        this.handleInput(action, true);
-                    };
-
-                    const handleRelease = (e) => {
-                        e.preventDefault();
-                        this.inputState[action] = false;
-                        btn.classList.remove('pressed');
-                        this.handleInput(action, false);
-                    };
-
-                    // Touch events
-                    btn.addEventListener('touchstart', handlePress);
-                    btn.addEventListener('touchend', handleRelease);
-                    btn.addEventListener('touchcancel', handleRelease);
-
-                    // Mouse events
-                    btn.addEventListener('mousedown', handlePress);
-                    btn.addEventListener('mouseup', handleRelease);
-                    btn.addEventListener('mouseleave', handleRelease);
-                });
-
-                // Prevent context menu and zooming
-                document.addEventListener('contextmenu', e => e.preventDefault());
-                document.addEventListener('touchmove', e => {
-                    if (e.touches.length > 1) e.preventDefault();
-                }, { passive: false });
-            }
-
-            setupNetworking() {
-                // Connect to WebSocket server
-                const serverUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                    ? 'http://localhost:3000'  // Development
-                    : window.location.origin;  // Production - use same domain as the game
-
-                console.log('Connecting to server:', serverUrl);
-                this.socket = io(serverUrl);
-                this.connected = false;
-
-                // Connection events
-                this.socket.on('connect', () => {
-                    console.log('Connected to game server');
-                    this.connected = true;
-                    this.updateConnectionStatus('connected', 'Connected to server');
-                });
-
-                this.socket.on('disconnect', () => {
-                    console.log('Disconnected from game server');
-                    this.connected = false;
-                    this.updateConnectionStatus('disconnected', 'Disconnected from server');
-                });
-
-                // Lobby events
-                this.socket.on('lobby_created', (data) => {
-                    console.log('Lobby created:', data);
-                    this.lobbyId = data.lobbyId;
-                    this.isHost = data.isHost;
-                    this.updateLobbyDisplay(data.lobbyState);
-                });
-
-                this.socket.on('lobby_joined', (data) => {
-                    console.log('Lobby joined:', data);
-                    this.lobbyId = data.lobbyId;
-                    this.isHost = data.isHost;
-                    this.onOpponentJoined();
-                    this.updateLobbyDisplay(data.lobbyState);
-                });
-
-                this.socket.on('lobby_updated', (lobbyState) => {
-                    console.log('Lobby updated:', lobbyState);
-                    this.updateLobbyDisplay(lobbyState);
-                });
-
-                this.socket.on('lobby_error', (error) => {
-                    console.error('Lobby error:', error);
-                    alert(error.error || 'Failed to join lobby');
-                    this.backToMenu();
-                });
-
-                this.socket.on('player_disconnected', (data) => {
-                    console.log('Player disconnected:', data);
-                    this.updateLobbyDisplay(data.lobbyState);
-                    if (this.gameState === 'fighting') {
-                        this.endGame('Opponent Disconnected');
-                    }
-                });
-
-                // Game events
-                this.socket.on('game_start', (data) => {
-                    console.log('Game starting:', data);
-                    this.startMultiplayerGame(data);
-                });
-
-                this.socket.on('game_input', (data) => {
-                    // Process opponent input
-                    this.processOpponentInput(data);
-                });
-
-                this.socket.on('game_update', (data) => {
-                    // Process opponent game state updates
-                    this.processOpponentUpdate(data);
-                });
-
-                this.socket.on('game_over', (data) => {
-                    console.log('Game over:', data);
-                    this.endGame(data.winner);
-                });
-
-                // Keep connection alive
-                setInterval(() => {
-                    if (this.socket.connected) {
-                        this.socket.emit('ping');
-                    }
-                }, 30000);
-
-                this.socket.on('pong', () => {
-                    // Connection is alive
-                });
-            }
-
-            updateConnectionStatus(status, message) {
-                const statusElement = document.getElementById('connectionStatus');
-                if (statusElement) {
-                    statusElement.className = status;
-                    statusElement.textContent = message;
-                    statusElement.style.display = this.gameState === 'lobby' ? 'block' : 'none';
-                }
-            }
-
-            updateLobbyDisplay(lobbyState) {
-                if (!lobbyState) return;
-
-                document.getElementById('playerCount').textContent = `${lobbyState.playerCount}/${lobbyState.maxPlayers}`;
-                
-                // Show ready buttons if lobby is full
-                if (lobbyState.playerCount === lobbyState.maxPlayers) {
-                    document.getElementById('readyButtons').style.display = 'block';
-                }
-
-                // Update ready status
-                const myPlayer = lobbyState.players.find(p => p.id === this.socket.id);
-                if (myPlayer) {
-                    this.playerReady = myPlayer.ready;
-                    const readyBtn = document.querySelector('.readyBtn');
-                    if (readyBtn) {
-                        readyBtn.textContent = this.playerReady ? 'READY!' : 'Ready?';
-                        readyBtn.className = `readyBtn ${this.playerReady ? 'ready' : 'not-ready'}`;
-                    }
-                }
-            }
-
-            processOpponentInput(inputData) {
-                if (this.gameState !== 'fighting') return;
-
-                const opponent = this.players.find(p => p.id !== this.playerId);
-                if (!opponent) return;
-
-                // Apply opponent's input to their character
-                switch(inputData.action) {
-                    case 'move':
-                        opponent.x = inputData.x;
-                        opponent.y = inputData.y;
-                        opponent.facing = inputData.facing;
-                        break;
-                    case 'attack':
-                        this.performOpponentAttack(opponent, inputData.attackType);
-                        break;
-                    case 'special':
-                        this.performOpponentSpecial(opponent, inputData.moveType);
-                        break;
-                }
-
-                this.updatePlayerElement(opponent);
-            }
-
-            processOpponentUpdate(updateData) {
-                if (this.gameState !== 'fighting') return;
-
-                const opponent = this.players.find(p => p.id !== this.playerId);
-                if (!opponent) return;
-
-                // Update opponent's game state
-                if (updateData.health !== undefined) {
-                    opponent.health = updateData.health;
-                    this.updateHealthBar(opponent);
-                }
-
-                if (updateData.position) {
-                    opponent.x = updateData.position.x;
-                    opponent.y = updateData.position.y;
-                    this.updatePlayerElement(opponent);
-                }
-            }
-
-            handleInput(action, pressed) {
-                if (this.gameState !== 'fighting') return;
-
-                const input = {
-                    playerId: this.playerId,
-                    action: action,
-                    pressed: pressed,
-                    timestamp: Date.now()
-                };
-
-                this.processInput(input);
-                
-                if (this.isMultiplayer && this.ws.readyState === 1) {
-                    this.ws.send(JSON.stringify({
-                        type: 'input',
-                        data: input
-                    }));
-                }
-            }
-
-            processInput(input) {
-                const player = this.players.find(p => p.id === input.playerId);
-                if (!player) return;
-
-                if (!input.pressed) return;
-
-                switch(input.action) {
-                    case 'light_punch':
-                        this.performAttack(player, 'light_punch', 8, 150);
-                        break;
-                    case 'heavy_punch':
-                        this.performAttack(player, 'heavy_punch', 15, 300);
-                        break;
-                    case 'light_kick':
-                        this.performAttack(player, 'light_kick', 10, 180);
-                        break;
-                    case 'heavy_kick':
-                        this.performAttack(player, 'heavy_kick', 18, 350);
-                        break;
-                }
-
-                // Check for special move combinations
-                this.checkSpecialMoves(player);
-            }
-
-            checkSpecialMoves(player) {
-                const recentMotions = this.motionBuffer.slice(-6); // Last 6 inputs
-                
-                // Hadoken: ↓↘→ + Punch
-                if (this.matchesMotion(recentMotions, ['down', 'right']) && 
-                    (this.inputState.light_punch || this.inputState.heavy_punch)) {
-                    this.performSpecialMove(player, 'hadoken');
-                }
-                
-                // Dragon Punch: →↓↘ + Punch  
-                else if (this.matchesMotion(recentMotions, ['right', 'down']) && 
-                         (this.inputState.light_punch || this.inputState.heavy_punch)) {
-                    this.performSpecialMove(player, 'dragon_punch');
-                }
-            }
-
-            matchesMotion(motions, pattern) {
-                if (motions.length < pattern.length) return false;
-                
-                for (let i = 0; i < pattern.length; i++) {
-                    if (!motions.find(m => m.direction === pattern[i])) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-
-            performAttack(player, type, damage, duration) {
-                if (player.attacking || player.ducking) return;
-
-                player.attacking = true;
-                player.currentAction = type;
-                
-                setTimeout(() => {
-                    player.attacking = false;
-                    this.checkCollisions(player, damage);
-                }, duration);
-
-                this.createParticles(player.x + player.scaledWidth/2, player.y + player.scaledHeight/2, '#ffffff');
-            }
-
-            performSpecialMove(player, moveType) {
-                if (player.specialMeter < 100) return;
-
-                player.specialMeter = 0;
-                this.updateSpecialMeter(player);
-                
-                this.createParticles(player.x + player.scaledWidth/2, player.y + player.scaledHeight/2, '#ffff00');
-                
-                // Special move logic here
-                console.log(`${moveType} activated!`);
-            }
-
-            checkCollisions(attacker, damage) {
-                const defender = this.players.find(p => p.id !== attacker.id);
-                if (!defender) return;
-
-                const distance = Math.abs(attacker.x - defender.x);
-                const attackRange = attacker.scaledWidth * 1.5;
-                
-                if (distance < attackRange) {
-                    if (!defender.ducking || (defender.ducking && Math.random() > 0.5)) {
-                        defender.health -= damage;
-                        this.updateHealthBar(defender);
-                        this.createParticles(defender.x + defender.scaledWidth/2, defender.y + defender.scaledHeight/2, '#ff0000');
-                        
-                        // Build special meter
-                        attacker.specialMeter = Math.min(100, attacker.specialMeter + 10);
-                        this.updateSpecialMeter(attacker);
-                    }
-                }
-            }
-
-            updateHealthBar(player) {
-                const healthElement = document.getElementById(player.isPlayer1 ? 'p1Health' : 'p2Health');
-                const healthPercent = Math.max(0, (player.health / 100) * 100);
-                healthElement.style.width = `${healthPercent}%`;
-
-                if (player.health <= 0) {
-                    this.endGame(player.isPlayer1 ? 'Player 2' : 'Player 1');
-                }
-            }
-
-            updateSpecialMeter(player) {
-                const meterElement = document.getElementById(player.isPlayer1 ? 'p1Special' : 'p2Special');
-                const meterPercent = Math.max(0, (player.specialMeter / 100) * 100);
-                meterElement.style.width = `${meterPercent}%`;
-            }
-
-            createParticles(x, y, color) {
-                const particleCount = 6;
-                const particleSize = this.scale.height * 0.008; // 0.8% of screen height
-                
-                for (let i = 0; i < particleCount; i++) {
-                    const particle = document.createElement('div');
-                    particle.className = 'particle';
-                    particle.style.left = `${x}px`;
-                    particle.style.top = `${y}px`;
-                    particle.style.width = `${particleSize}px`;
-                    particle.style.height = `${particleSize}px`;
-                    particle.style.background = color;
-                    particle.style.setProperty('--dx', `${(Math.random() - 0.5) * this.scale.width * 0.1}px`);
-                    particle.style.setProperty('--dy', `${(Math.random() - 0.5) * this.scale.height * 0.1}px`);
-                    
-                    document.getElementById('gameContainer').appendChild(particle);
-                    
-                    setTimeout(() => particle.remove(), 500);
-                }
-            }
-
-            update() {
-                if (this.gameState !== 'fighting') return;
-
-                // Process continuous inputs for movement
-                this.players.forEach(player => {
-                    if (player.id === this.playerId) {
-                        // Apply continuous movement for local player
-                        if (this.inputState.left && !player.ducking && !player.attacking) {
-                            player.velocityX = -this.scale.width * 0.008; // Scale to screen size
-                            player.facing = -1;
-                        } else if (this.inputState.right && !player.ducking && !player.attacking) {
-                            player.velocityX = this.scale.width * 0.008;
-                            player.facing = 1;
-                        }
-
-                        // Jumping
-                        if (this.inputState.up && player.onGround && !player.ducking) {
-                            player.velocityY = -this.scale.height * 0.025; // Scale jump to screen
-                            player.onGround = false;
-                        }
-
-                        // Ducking
-                        if (this.inputState.down && player.onGround) {
-                            player.ducking = true;
-                        } else {
-                            player.ducking = false;
-                        }
-                    }
-                });
-
-                // Update physics
-                this.players.forEach(player => {
-                    // Apply gravity
-                    if (!player.onGround) {
-                        player.velocityY += this.scale.height * 0.0015; // Scaled gravity
-                    }
-
-                    // Update position
-                    player.x += player.velocityX;
-                    player.y += player.velocityY;
-
-                    // Update player scale
-                    this.updatePlayerScale(player);
-
-                    // Ground collision
-                    if (player.y >= player.groundY) {
-                        player.y = player.groundY;
-                        player.velocityY = 0;
-                        player.onGround = true;
-                    }
-
-                    // Boundary checks
-                    player.x = Math.max(0, Math.min(this.scale.width - player.scaledWidth, player.x));
-
-                    // Apply friction
-                    player.velocityX *= 0.85;
-                    if (Math.abs(player.velocityX) < 0.1) player.velocityX = 0;
-
-                    // Gradually build special meter
-                    if (player.specialMeter < 100) {
-                        player.specialMeter += 0.1;
-                        this.updateSpecialMeter(player);
-                    }
-
-                    this.updatePlayerElement(player);
-                });
-
-                // Update timer
-                this.gameTime -= 1/60;
-                document.getElementById('timer').textContent = Math.ceil(Math.max(0, this.gameTime));
-
-                if (this.gameTime <= 0) {
-                    this.endGame('Time Up!');
-                }
-            }
-
-            updatePlayerElement(player) {
-                let element = document.querySelector(`.fighter.${player.isPlayer1 ? 'player1' : 'player2'}`);
-                
-                if (!element) {
-                    element = document.createElement('div');
-                    element.className = `fighter ${player.isPlayer1 ? 'player1' : 'player2'}`;
-                    document.getElementById('gameContainer').appendChild(element);
-                }
-
-                // Apply scaling and position
-                element.style.left = `${player.x}px`;
-                element.style.top = `${player.y}px`;
-                element.style.width = `${player.scaledWidth}px`;
-                element.style.height = `${player.scaledHeight}px`;
-                element.style.transform = `scaleX(${player.facing})`;
-                
-                // Apply states
-                element.classList.toggle('attacking', player.attacking);
-                element.classList.toggle('ducking', player.ducking);
-
-                // Set background image if available
-                if (player.sprite) {
-                    element.style.backgroundImage = `url(${player.sprite})`;
-                }
-            }
-
-            render() {
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                // Additional canvas rendering can be added here for effects, background, etc.
-            }
-
-            gameLoop() {
-                this.update();
-                this.render();
-                requestAnimationFrame(() => this.gameLoop());
-            }
-
-            createLobby() {
-                if (!this.connected) {
-                    alert('Not connected to server. Please refresh and try again.');
-                    return;
-                }
-
-                this.gameState = 'lobby';
-                document.getElementById('menuContent').style.display = 'none';
-                document.getElementById('lobbyContent').style.display = 'block';
-                document.getElementById('connectionStatus').style.display = 'block';
-                
-                // Show loading state
-                document.getElementById('lobbyInfo').innerHTML = `
-                    <div style="font-size: 4vh; margin: 2vh 0;">Creating Lobby...</div>
-                    <div style="font-size: 2vh; color: #BBB;">Please wait...</div>
-                `;
-                
-                // Request lobby creation from server
-                this.socket.emit('create_lobby', {
-                    playerId: this.playerId
-                });
-            }
-
-            checkForLobbyJoin() {
-                // Check hash for lobby code
-                const hash = window.location.hash.substring(1); // Remove #
-                
-                if (hash && hash.match(/^\d{4}$/)) {
-                    // Wait for connection before joining
-                    if (this.connected) {
-                        this.joinLobby(hash);
-                    } else {
-                        // Wait for connection
-                        this.socket.on('connect', () => {
-                            this.joinLobby(hash);
-                        });
-                    }
-                }
-            }
-
-            joinLobby(lobbyId) {
-                if (!this.connected) {
-                    alert('Not connected to server. Please refresh and try again.');
-                    return;
-                }
-
-                this.gameState = 'lobby';
-                document.getElementById('menuContent').style.display = 'none';
-                document.getElementById('lobbyContent').style.display = 'block';
-                document.getElementById('connectionStatus').style.display = 'block';
-                
-                // Show joining state
-                document.getElementById('lobbyInfo').innerHTML = `
-                    <div style="font-size: 4vh; margin: 2vh 0;">Joining Lobby:</div>
-                    <div style="font-size: 6vh; font-weight: bold; color: #FFD700;">${lobbyId}</div>
-                    <div style="font-size: 2vh; color: #BBB; margin: 2vh 0;">Connecting...</div>
-                `;
-                
-                // Update URL
-                window.location.hash = lobbyId;
-                
-                // Request to join lobby
-                this.socket.emit('join_lobby', {
-                    lobbyId: lobbyId,
-                    playerId: this.playerId
-                });
-            }
-
-            onOpponentJoined() {
-                if (this.isHost) {
-                    // Update lobby display to show opponent joined
-                    const currentInfo = document.getElementById('lobbyInfo').innerHTML;
-                    document.getElementById('lobbyInfo').innerHTML = currentInfo.replace(
-                        'Share this link',
-                        '<div style="color: #00FF00; font-size: 3vh; margin: 1vh 0;">✓ Opponent Joined!</div>Share this link'
-                    );
-                }
-            }
-
-            toggleReady() {
-                if (!this.connected) {
-                    alert('Not connected to server.');
-                    return;
-                }
-
-                this.playerReady = !this.playerReady;
-                
-                // Send ready status to server
-                this.socket.emit('player_ready', {
-                    lobbyId: this.lobbyId,
-                    playerId: this.playerId,
-                    ready: this.playerReady
-                });
-            }
-
-            startMultiplayerGame(gameData) {
-                this.gameState = 'fighting';
-                this.isMultiplayer = true;
-                
-                // Determine player positions based on server data
-                const playerIds = gameData.players;
-                const isPlayer1 = playerIds.indexOf(this.socket.id) === 0;
-                
-                this.initializePlayers();
-                
-                // Assign network IDs
-                this.players[0].id = isPlayer1 ? this.socket.id : playerIds.find(id => id !== this.socket.id);
-                this.players[1].id = isPlayer1 ? playerIds.find(id => id !== this.socket.id) : this.socket.id;
-                
-                // Set which player is controlled locally
-                this.players[0].isLocal = isPlayer1;
-                this.players[1].isLocal = !isPlayer1;
-                
-                document.getElementById('gameOverlay').style.display = 'none';
-                document.getElementById('connectionStatus').style.display = 'none';
+                // Game state
+                this.gameState = 'menu'; // 'menu', 'lobby', 'fighting'
                 this.gameTime = 60;
+                this.gameTimer = null;
                 
-                console.log('Multiplayer game started!', { isPlayer1, players: this.players });
-            }
-                    readyBtn.className = 'readyBtn ready';
-                } else {
-                    readyBtn.textContent = 'Not Ready';
-                    readyBtn.className = 'readyBtn not-ready';
-                }
-                
-                this.ws.send(JSON.stringify({
-                    type: 'player_ready',
-                    lobbyId: this.lobbyId,
-                    playerId: this.playerId,
-                    ready: this.playerReady
-                }));
-                
-                this.checkBothReady();
-            }
-
-            checkBothReady() {
-                setTimeout(() => {
-                    this.opponentReady = true;
-                    if (this.playerReady && this.opponentReady) {
-                        this.startMultiplayerGame();
-                    }
-                }, 1000);
-            }
-
-            startMultiplayerGame() {
-                this.gameState = 'fighting';
-                this.isMultiplayer = true;
-                this.initializePlayers();
-                
-                document.getElementById('gameOverlay').style.display = 'none';
-                document.getElementById('connectionStatus').style.display = 'none';
-                this.gameTime = 60;
-            }
-
-            startPracticeMode() {
-                this.gameState = 'fighting';
+                // Multiplayer state
                 this.isMultiplayer = false;
-                this.initializePlayers();
-                
-                document.getElementById('gameOverlay').style.display = 'none';
-                document.getElementById('connectionStatus').style.display = 'none';
-                this.gameTime = 60;
-            }
-
-            initializePlayers() {
-                const fighterWidth = this.scale.width * this.fighterConfig.width;
-                const fighterHeight = this.scale.height * this.fighterConfig.height;
-                const groundY = this.scale.height * this.fighterConfig.groundLevel;
-
-                this.players = [
-                    {
-                        id: this.playerId,
-                        isPlayer1: this.isMultiplayer ? this.isHost : true,
-                        x: this.scale.width * 0.15, // 15% from left
-                        y: groundY,
-                        velocityX: 0,
-                        velocityY: 0,
-                        health: 100,
-                        specialMeter: 0,
-                        facing: 1,
-                        onGround: true,
-                        attacking: false,
-                        ducking: false,
-                        scaledWidth: fighterWidth,
-                        scaledHeight: fighterHeight,
-                        groundY: groundY,
-                        sprite: null // Will be set when loading custom graphics
-                    },
-                    {
-                        id: this.isMultiplayer ? 'opponent' : 'ai',
-                        isPlayer1: this.isMultiplayer ? !this.isHost : false,
-                        x: this.scale.width * 0.75, // 75% from left
-                        y: groundY,
-                        velocityX: 0,
-                        velocityY: 0,
-                        health: 100,
-                        specialMeter: 0,
-                        facing: -1,
-                        onGround: true,
-                        attacking: false,
-                        ducking: false,
-                        scaledWidth: fighterWidth,
-                        scaledHeight: fighterHeight,
-                        groundY: groundY,
-                        sprite: null
-                    }
-                ];
-
-                // Reset health and special meters
-                document.getElementById('p1Health').style.width = '100%';
-                document.getElementById('p2Health').style.width = '100%';
-                document.getElementById('p1Special').style.width = '0%';
-                document.getElementById('p2Special').style.width = '0%';
-            }
-
-            backToMenu() {
-                this.gameState = 'menu';
-                document.getElementById('menuContent').style.display = 'block';
-                document.getElementById('lobbyContent').style.display = 'none';
-                
-                // Clear hash
-                window.location.hash = '';
-                
-                // Clean up lobby polling
-                if (this.lobbyInterval) {
-                    clearInterval(this.lobbyInterval);
-                    this.lobbyInterval = null;
-                }
-                
-                // Clean up localStorage for this lobby
-                if (this.lobbyId) {
-                    localStorage.removeItem(`lobby_${this.lobbyId}`);
-                    localStorage.removeItem(`lobby_${this.lobbyId}_joined`);
-                    localStorage.removeItem(`lobby_${this.lobbyId}_ready_${this.playerId}`);
-                }
-                
-                // Reset lobby state
-                this.lobbyId = null;
                 this.isHost = false;
+                this.lobbyCode = null;
+                this.playerId = Math.random().toString(36).substr(2, 9);
                 this.playerReady = false;
                 this.opponentReady = false;
+                this.connected = false;
                 
-                // Clean up fighters
-                document.querySelectorAll('.fighter').forEach(f => f.remove());
+                // Players
+                this.players = {};
+                this.initializePlayers();
+                
+                // Input handling
+                this.keys = {};
+                this.touches = {};
+                
+                // Game loop
+                this.lastTime = 0;
+                this.gameLoop = this.gameLoop.bind(this);
+                requestAnimationFrame(this.gameLoop);
+                
+                // Check for lobby join on load
+                this.checkForLobbyJoin();
             }
-
-            endGame(winner) {
-                this.gameState = 'gameOver';
-                const overlay = document.getElementById('gameOverlay');
-                overlay.style.display = 'flex';
-                overlay.querySelector('h1').textContent = `${winner} Wins!`;
-                
-                // Show menu content again
-                document.getElementById('menuContent').style.display = 'block';
-                document.getElementById('lobbyContent').style.display = 'none';
-                
-                // Clean up fighters
-                document.querySelectorAll('.fighter').forEach(f => f.remove());
-                
-                // Reset for next game
-                setTimeout(() => {
-                    overlay.querySelector('h1').textContent = 'Mobile Fighter';
-                }, 3000);
-            }
-
-            // Method to load custom character sprites
-            loadCharacterSprite(playerId, spriteUrl) {
-                const player = this.players.find(p => p.id === playerId);
-                if (player) {
-                    player.sprite = spriteUrl;
-                    this.updatePlayerElement(player);
-                }
-            }
-        }
-
-        // Global functions for UI
-        function startPracticeMode() {
-            window.game.startPracticeMode();
-        }
-
-        function createLobby() {
-            window.game.createLobby();
-        }
-
-        function toggleReady() {
-            window.game.toggleReady();
-        }
-
-        function backToMenu() {
-            window.game.backToMenu();
-        }
-
-        // Initialize game when page loads
-        window.addEventListener('load', () => {
-            window.game = new FightingGameEngine();
             
-            // Check if joining lobby from hash
-            const hash = window.location.hash.substring(1);
-            if (hash && hash.match(/^\d{4}$/)) {
-                setTimeout(() => {
-                    window.game.joinLobby(hash);
-                }, 500);
-            }
-        });
-
-        // Prevent scrolling and zooming
-        document.addEventListener('touchstart', function(e) {
-            if (e.touches.length > 1) {
-                e.preventDefault();
-            }
-        });
-
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(e) {
-            const now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                e.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
-
-        // Lock orientation to landscape
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {
-                console.log('Orientation lock not supported');
-            });
-        }
-
-        // Image management system
-        const GameAssets = {
-            backgrounds: {
-                // Add background images here
-                street: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ic2t5IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM4N0NFRUIiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI3MCUiIHN0b3AtY29sb3I9IiNGRkE1MDAiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjRkY2MzQ3Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3NreSkiLz4KICA8IS0tIEJ1aWxkaW5ncyAtLT4KICA8cmVjdCB4PSIwIiB5PSI0MDAiIHdpZHRoPSIxNTAiIGhlaWdodD0iMjAwIiBmaWxsPSIjMzMzIi8+CiAgPHJlY3QgeD0iMTgwIiB5PSIzNTAiIHdpZHRoPSIxMjAiIGhlaWdodD0iMjUwIiBmaWxsPSIjNDQ0Ii8+CiAgPHJlY3QgeD0iMzIwIiB5PSIzODAiIHdpZHRoPSIxNDAiIGhlaWdodD0iMjIwIiBmaWxsPSIjMjIyIi8+CiAgPHJlY3QgeD0iNTAwIiB5PSIzMDAiIHdpZHRoPSIxNjAiIGhlaWdodD0iMzAwIiBmaWxsPSIjNTU1Ii8+CiAgPHJlY3QgeD0iNjgwIiB5PSIzNTAiIHdpZHRoPSIxMjAiIGhlaWdodD0iMjUwIiBmaWxsPSIjMzMzIi8+CiAgPCEtLSBHcm91bmQgLS0+CiAgPHJlY3QgeD0iMCIgeT0iNTAwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAiIGZpbGw9IiM2NjYiLz4KPC9zdmc+',
-                dojo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIERvam8gQmFja2dyb3VuZCAtLT4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMkEyQTJBIi8+CiAgPCEtLSBXb29kIEZsb29yIC0tPgogIDxyZWN0IHg9IjAiIHk9IjUwMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwIiBmaWxsPSIjOEI0NTEzIi8+CiAgPCEtLSBXYWxsIFBhbmVscyAtLT4KICA8cmVjdCB4PSIwIiB5PSIxMDAiIHdpZHRoPSIyMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjNDQ0IiBzdHJva2U9IiM2NjYiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxyZWN0IHg9IjIwMCIgeT0iMTAwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzM4MyIgc3Ryb2tlPSIjNjY2IiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cmVjdCB4PSI0MDAiIHk9IjEwMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiM0NDQiIHN0cm9rZT0iIzY2NiIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPHJlY3QgeD0iNjAwIiB5PSIxMDAiIHdpZHRoPSIyMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjMzgzIiBzdHJva2U9IiM2NjYiIHN0cm9rZS13aWR0aD0iMyIvPgo8L3N2Zz4='
-            },
-            characters: {
-                // Simple placeholder character sprites
-                player1_idle: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iMTIwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDwhLS0gU2ltcGxlIEZpZ2h0ZXIgU3ByaXRlIC0tPgogIDxyZWN0IHdpZHRoPSI4MCIgaGVpZ2h0PSIxMjAiIGZpbGw9InVybCgjcGxheWVyMWdyYWQpIiByeD0iMTAiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0icGxheWVyMWdyYWQiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjRkY2QjZCIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI0VFNUEyNCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPCEtLSBIZWFkIC0tPgogIDxjaXJjbGUgY3g9IjQwIiBjeT0iMjAiIHI9IjE1IiBmaWxsPSIjRkZEQkI0Ii8+CiAgPCEtLSBCb2R5IC0tPgogIDxyZWN0IHg9IjI1IiB5PSIzNSIgd2lkdGg9IjMwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRkY2QjZCIiByeD0iNSIvPgogIDwhLS0gQXJtcyAtLT4KICA8cmVjdCB4PSIxMCIgeT0iNDAiIHdpZHRoPSIxNSIgaGVpZ2h0PSI0MCIgZmlsbD0iI0ZGREJCNCIgcng9IjciLz4KICA8cmVjdCB4PSI1NSIgeT0iNDAiIHdpZHRoPSIxNSIgaGVpZ2h0PSI0MCIgZmlsbD0iI0ZGREJCNCIgcng9IjciLz4KICA8IS0tIExlZ3MgLS0+CiAgPHJlY3QgeD0iMjgiIHk9Ijg1IiB3aWR0aD0iMTIiIGhlaWdodD0iMzUiIGZpbGw9IiMwMDQ0ODgiIHJ4PSI2Ii8+CiAgPHJlY3QgeD0iNDAiIHk9Ijg1IiB3aWR0aD0iMTIiIGhlaWdodD0iMzUiIGZpbGw9IiMwMDQ0ODgiIHJ4PSI2Ii8+Cjwvc3ZnPg==',
-                player2_idle: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iMTIwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDwhLS0gU2ltcGxlIEZpZ2h0ZXIgU3ByaXRlIDIgLS0+CiAgPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjEyMCIgZmlsbD0idXJsKCNwbGF5ZXIyZ3JhZCkiIHJ4PSIxMCIvPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJwbGF5ZXIyZ3JhZCI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM0ODM0RDQiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjg2REUwIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8IS0tIEhlYWQgLS0+CiAgPGNpcmNsZSBjeD0iNDAiIGN5PSIyMCIgcj0iMTUiIGZpbGw9IiNGRkRCQjQiLz4KICA8IS0tIEJvZHkgLS0+CiAgPHJlY3QgeD0iMjUiIHk9IjM1IiB3aWR0aD0iMzAiIGhlaWdodD0iNTAiIGZpbGw9IiM0ODM0RDQiIHJ4PSI1Ii8+CiAgPCEtLSBBcm1zIC0tPgogIDxyZWN0IHg9IjEwIiB5PSI0MCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjQwIiBmaWxsPSIjRkZEQkI0IiByeD0iNyIvPgogIDxyZWN0IHg9IjU1IiB5PSI0MCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjQwIiBmaWxsPSIjRkZEQkI0IiByeD0iNyIvPgogIDwhLS0gTGVncyAtLT4KICA8cmVjdCB4PSIyOCIgeT0iODUiIHdpZHRoPSIxMiIgaGVpZ2h0PSIzNSIgZmlsbD0iIzg4NjZBQSIgcng9IjYiLz4KICA8cmVjdCB4PSI0MCIgeT0iODUiIHdpZHRoPSIxMiIgaGVpZ2h0PSIzNSIgZmlsbD0iIzg4NjZBQSIgcng9IjYiLz4KPC9zdmc+'
-            }
-        };
-
-        // Enhanced character loading system
-        function loadCustomCharacters() {
-            // Load default sprites when game starts
-            setTimeout(() => {
-                if (window.game && window.game.players.length > 0) {
-                    // Load Player 1 sprite
-                    window.game.loadCharacterSprite(window.game.players[0].id, GameAssets.characters.player1_idle);
+            setupCanvas() {
+                const resizeCanvas = () => {
+                    const dpr = window.devicePixelRatio || 1;
+                    const displayWidth = window.innerWidth;
+                    const displayHeight = window.innerHeight;
                     
-                    // Load Player 2 sprite
-                    if (window.game.players[1]) {
-                        window.game.loadCharacterSprite(window.game.players[1].id, GameAssets.characters.player2_idle);
-                    }
-                }
-            }, 500);
-        }
-
-        // Background management
-        function setGameBackground(backgroundKey) {
-            const canvas = document.getElementById('gameCanvas');
-            if (GameAssets.backgrounds[backgroundKey]) {
-                canvas.style.background = `url("${GameAssets.backgrounds[backgroundKey]}") no-repeat center center`;
-                canvas.style.backgroundSize = 'cover';
+                    this.canvas.width = displayWidth * dpr;
+                    this.canvas.height = displayHeight * dpr;
+                    this.canvas.style.width = displayWidth + 'px';
+                    this.canvas.style.height = displayHeight + 'px';
+                    
+                    this.ctx.scale(dpr, dpr);
+                    
+                    this.canvasWidth = displayWidth;
+                    this.canvasHeight = displayHeight;
+                };
+                
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
             }
-        }
-
-        // Auto-load assets when fighting starts
-        const originalStartPractice = window.startPracticeMode;
-        const originalStartMultiplayer = function() {
-            if (window.game) window.game.startMultiplayerGame();
-        };
-
-        window.startPracticeMode = function() {
-            originalStartPractice();
-            setTimeout(() => {
-                setGameBackground('street'); // Load street background
-                loadCustomCharacters();      // Load character sprites
-            }, 100);
-        };
-
-        // Example: How to add your own images
-        function addCustomAssets() {
-            // Replace these URLs with your actual image files
-            GameAssets.characters.ryu_idle = 'characters/ryu-idle.png';
-            GameAssets.characters.ryu_punch = 'characters/ryu-punch.png';
-            GameAssets.characters.chun_li_idle = 'characters/chun-li-idle.png';
-            GameAssets.backgrounds.training_stage = 'backgrounds/training-stage.jpg';
             
-            // Then load them
-            // window.game.loadCharacterSprite('player1', GameAssets.characters.ryu_idle);
-        }
-        // Initialize the game when page loads
+            setupNetworking() {
+                const serverUrl = window.location.origin;
+                this.socket = io(serverUrl);
+                
+                this.socket.on('connect', () => {
+                    this.connected = true;
+                    this.updateConnectionStatus(true);
+                });
+                
+                this.socket.on('disconnect', () => {
+                    this.connected = false;
+                    this.updateConnectionStatus(false);
+                });
+                
+                this.socket.on('lobby_created', (data) => {
+                    this.lobbyCode = data.lobbyCode;
+                    this.isHost = true;
+                    this.updateLobbyDisplay();
+                });
+                
+                this.socket.on('lobby_joined', (data) => {
+                    this.lobbyCode = data.lobbyCode;
+                    this.isHost = false;
+                    this.updateLobbyDisplay();
+                    document.getElementById('readyBtn').style.display = 'block';
+                });
+                
+                this.socket.on('player_joined', (data) => {
+                    this.updateLobbyDisplay();
+                    document.getElementById('readyBtn').style.display = 'block';
+                });
+                
+                this.socket.on('ready_status', (data) => {
+                    this.playerReady = data.player1Ready;
+                    this.opponentReady = data.player2Ready;
+                    this.updateReadyDisplay();
+                });
+                
+                this.socket.on('game_start', () => {
+                    this.startMultiplayerGame();
+                });
+                
+                this.socket.on('player_state', (data) => {
+                    if (data.playerId !== this.playerId && this.players[2]) {
+                        this.players[2].x = data.x;
+                        this.players[2].y = data.y;
+                        this.players[2].direction = data.direction;
+                        this.players[2].currentAction = data.action;
+                        this.players[2].health = data.health;
+                    }
+                });
+                
+                this.socket.on('lobby_error', (data) => {
+                    alert(data.message);
+                });
+            }
+            
+            setupEventListeners() {
+                // Keyboard events
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.code] = true;
+                    e.preventDefault();
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.code] = false;
+                    e.preventDefault();
+                });
+                
+                // Touch events for buttons
+                const buttons = [
+                    { id: 'leftBtn', action: 'moveLeft' },
+                    { id: 'rightBtn', action: 'moveRight' },
+                    { id: 'punchBtn', action: 'punch' },
+                    { id: 'kickBtn', action: 'kick' },
+                    { id: 'specialBtn', action: 'special' }
+                ];
+                
+                buttons.forEach(button => {
+                    const element = document.getElementById(button.id);
+                    element.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.touches[button.action] = true;
+                    });
+                    element.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        this.touches[button.action] = false;
+                    });
+                    element.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        this.touches[button.action] = true;
+                    });
+                    element.addEventListener('mouseup', (e) => {
+                        e.preventDefault();
+                        this.touches[button.action] = false;
+                    });
+                });
+                
+                // Prevent context menu on long press
+                document.addEventListener('contextmenu', (e) => e.preventDefault());
+                
+                // Prevent zoom on double tap
+                let lastTouchEnd = 0;
+                document.addEventListener('touchend', (e) => {
+                    const now = (new Date()).getTime();
+                    if (now - lastTouchEnd <= 300) {
+                        e.preventDefault();
+                    }
+                    lastTouchEnd = now;
+                }, false);
+            }
+            
+            initializePlayers() {
+                this.players = {
+                    1: {
+                        x: this.canvasWidth * 0.25,
+                        y: this.canvasHeight * 0.7,
+                        width: 60,
+                        height: 100,
+                        health: 100,
+                        maxHealth: 100,
+                        direction: 1,
+                        speed: 5,
+                        jumpPower: 15,
+                        velocityY: 0,
+                        onGround: true,
+                        currentAction: 'idle',
+                        actionTimer: 0,
+                        lastAttackTime: 0,
+                        color: '#4CAF50'
+                    },
+                    2: {
+                        x: this.canvasWidth * 0.75,
+                        y: this.canvasHeight * 0.7,
+                        width: 60,
+                        height: 100,
+                        health: 100,
+                        maxHealth: 100,
+                        direction: -1,
+                        speed: 5,
+                        jumpPower: 15,
+                        velocityY: 0,
+                        onGround: true,
+                        currentAction: 'idle',
+                        actionTimer: 0,
+                        lastAttackTime: 0,
+                        color: '#2196F3'
+                    }
+                };
+            }
+            
+            updateConnectionStatus(connected) {
+                const status = document.getElementById('connectionStatus');
+                if (connected) {
+                    status.textContent = 'Connected';
+                    status.className = 'connection-status connected';
+                } else {
+                    status.textContent = 'Disconnected';
+                    status.className = 'connection-status disconnected';
+                }
+            }
+            
             checkForLobbyJoin() {
                 const hash = window.location.hash.substring(1);
                 if (hash && hash.match(/^\d{4}$/)) {
@@ -1599,7 +556,7 @@
                     }
                 }
             }
-
+            
             createLobby() {
                 if (!this.connected) {
                     alert('Not connected to server. Please refresh and try again.');
@@ -1620,38 +577,211 @@
                     playerId: this.playerId
                 });
             }
-
+            
+            joinLobby(code) {
+                this.gameState = 'lobby';
+                document.getElementById('menuContent').style.display = 'none';
+                document.getElementById('lobbyContent').style.display = 'block';
+                document.getElementById('connectionStatus').style.display = 'block';
+                
+                document.getElementById('lobbyInfo').innerHTML = `
+                    <div style="font-size: 4vh; margin: 2vh 0;">Joining Lobby...</div>
+                    <div style="font-size: 2vh; color: #BBB;">Code: ${code}</div>
+                `;
+                
+                this.socket.emit('join_lobby', {
+                    lobbyCode: code,
+                    playerId: this.playerId
+                });
+            }
+            
+            updateLobbyDisplay() {
+                if (this.lobbyCode) {
+                    const shareUrl = `${window.location.origin}#${this.lobbyCode}`;
+                    document.getElementById('lobbyInfo').innerHTML = `
+                        <div style="font-size: 6vh; margin: 2vh 0; color: #FFD700;">${this.lobbyCode}</div>
+                        <div style="font-size: 3vh; margin: 2vh 0;">Share this code with your friend!</div>
+                        <div style="font-size: 2vh; word-break: break-all; color: #BBB;">${shareUrl}</div>
+                    `;
+                }
+            }
+            
+            updateReadyDisplay() {
+                const player1Status = document.getElementById('player1Ready');
+                const player2Status = document.getElementById('player2Ready');
+                
+                player1Status.textContent = `Player 1: ${this.playerReady ? 'Ready!' : 'Not Ready'}`;
+                player1Status.className = this.playerReady ? 'ready-true' : 'ready-false';
+                
+                player2Status.textContent = `Player 2: ${this.opponentReady ? 'Ready!' : 'Not Ready'}`;
+                player2Status.className = this.opponentReady ? 'ready-true' : 'ready-false';
+                
+                const readyBtn = document.getElementById('readyBtn');
+                readyBtn.textContent = this.playerReady ? 'Not Ready' : 'Ready Up!';
+                readyBtn.className = this.playerReady ? 'menu-btn danger-btn' : 'menu-btn';
+            }
+            
+            toggleReady() {
+                this.playerReady = !this.playerReady;
+                this.socket.emit('toggle_ready', {
+                    playerId: this.playerId,
+                    ready: this.playerReady
+                });
+                this.updateReadyDisplay();
+            }
+            
             startPracticeMode() {
                 this.gameState = 'fighting';
                 this.isMultiplayer = false;
                 this.initializePlayers();
                 document.getElementById('gameOverlay').style.display = 'none';
+                document.getElementById('touchControls').style.display = 'flex';
+                document.getElementById('gameHud').style.display = 'flex';
+                document.getElementById('connectionStatus').style.display = 'none';
                 this.gameTime = 60;
+                this.startGameTimer();
             }
-        }
-
-        // Initialize game when page loads
-        let game;
-        window.addEventListener('load', () => {
-            game = new FightingGameEngine();
-        });
-
-        // Global functions for button clicks
-        function createLobby() {
-            if (game) game.createLobby();
-        }
-
-        function startPracticeMode() {
-            if (game) game.startPracticeMode();
-        }
-
-        function toggleReady() {
-            if (game) game.toggleReady();
-        }
-
-        function backToMenu() {
-            if (game) game.backToMenu();
-        }
-    </script>
-</body>
-</html>
+            
+            startMultiplayerGame() {
+                this.gameState = 'fighting';
+                this.isMultiplayer = true;
+                this.initializePlayers();
+                document.getElementById('gameOverlay').style.display = 'none';
+                document.getElementById('touchControls').style.display = 'flex';
+                document.getElementById('gameHud').style.display = 'flex';
+                this.gameTime = 60;
+                this.startGameTimer();
+            }
+            
+            startGameTimer() {
+                this.gameTimer = setInterval(() => {
+                    this.gameTime--;
+                    document.getElementById('gameTimer').textContent = this.gameTime;
+                    
+                    if (this.gameTime <= 0) {
+                        this.endGame('Time Up!');
+                    }
+                }, 1000);
+            }
+            
+            backToMenu() {
+                this.gameState = 'menu';
+                document.getElementById('menuContent').style.display = 'block';
+                document.getElementById('lobbyContent').style.display = 'none';
+                document.getElementById('gameOverlay').style.display = 'flex';
+                document.getElementById('touchControls').style.display = 'none';
+                document.getElementById('gameHud').style.display = 'none';
+                document.getElementById('connectionStatus').style.display = 'none';
+                
+                if (this.gameTimer) {
+                    clearInterval(this.gameTimer);
+                    this.gameTimer = null;
+                }
+                
+                if (this.lobbyCode) {
+                    this.socket.emit('leave_lobby', { playerId: this.playerId });
+                    this.lobbyCode = null;
+                    this.playerReady = false;
+                    this.opponentReady = false;
+                }
+                
+                window.location.hash = '';
+            }
+            
+            handleInput(player) {
+                const p = this.players[player];
+                const now = Date.now();
+                
+                // Movement controls
+                let moving = false;
+                if ((player === 1 && (this.keys['ArrowLeft'] || this.keys['KeyA'] || this.touches['moveLeft'])) ||
+                    (player === 2 && (this.keys['ArrowLeft'] || this.keys['KeyA']) && !this.isMultiplayer)) {
+                    p.x -= p.speed;
+                    p.direction = -1;
+                    moving = true;
+                }
+                if ((player === 1 && (this.keys['ArrowRight'] || this.keys['KeyD'] || this.touches['moveRight'])) ||
+                    (player === 2 && (this.keys['ArrowRight'] || this.keys['KeyD']) && !this.isMultiplayer)) {
+                    p.x += p.speed;
+                    p.direction = 1;
+                    moving = true;
+                }
+                
+                // Jump
+                if ((player === 1 && (this.keys['Space'] || this.keys['ArrowUp'] || this.keys['KeyW'])) ||
+                    (player === 2 && (this.keys['ArrowUp'] || this.keys['KeyW']) && !this.isMultiplayer)) {
+                    if (p.onGround) {
+                        p.velocityY = -p.jumpPower;
+                        p.onGround = false;
+                    }
+                }
+                
+                // Attack controls
+                if ((player === 1 && (this.keys['KeyZ'] || this.touches['punch'])) ||
+                    (player === 2 && this.keys['Numpad1'] && !this.isMultiplayer)) {
+                    if (now - p.lastAttackTime > 300) {
+                        this.performAttack(player, 'punch');
+                        p.lastAttackTime = now;
+                    }
+                }
+                if ((player === 1 && (this.keys['KeyX'] || this.touches['kick'])) ||
+                    (player === 2 && this.keys['Numpad2'] && !this.isMultiplayer)) {
+                    if (now - p.lastAttackTime > 400) {
+                        this.performAttack(player, 'kick');
+                        p.lastAttackTime = now;
+                    }
+                }
+                if ((player === 1 && (this.keys['KeyC'] || this.touches['special'])) ||
+                    (player === 2 && this.keys['Numpad3'] && !this.isMultiplayer)) {
+                    if (now - p.lastAttackTime > 800) {
+                        this.performAttack(player, 'special');
+                        p.lastAttackTime = now;
+                    }
+                }
+                
+                // Update action
+                if (p.actionTimer <= 0) {
+                    if (moving) {
+                        p.currentAction = 'walking';
+                    } else {
+                        p.currentAction = 'idle';
+                    }
+                }
+                
+                // Boundary check
+                p.x = Math.max(p.width/2, Math.min(this.canvasWidth - p.width/2, p.x));
+            }
+            
+            performAttack(playerNum, attackType) {
+                const attacker = this.players[playerNum];
+                const target = this.players[playerNum === 1 ? 2 : 1];
+                
+                attacker.currentAction = attackType;
+                attacker.actionTimer = attackType === 'special' ? 60 : (attackType === 'kick' ? 40 : 30);
+                
+                // Check if attack hits
+                const distance = Math.abs(attacker.x - target.x);
+                const attackRange = attackType === 'special' ? 120 : 80;
+                
+                if (distance < attackRange) {
+                    const damage = attackType === 'special' ? 25 : (attackType === 'kick' ? 15 : 10);
+                    target.health -= damage;
+                    target.health = Math.max(0, target.health);
+                    
+                    // Knockback
+                    const knockback = attackType === 'special' ? 30 : 15;
+                    target.x += attacker.direction * knockback;
+                    target.x = Math.max(target.width/2, Math.min(this.canvasWidth - target.width/2, target.x));
+                    
+                    this.updateHealthDisplay();
+                    
+                    if (target.health <= 0) {
+                        this.endGame(`Player ${playerNum} Wins!`);
+                    }
+                }
+            }
+            
+            updatePhysics(player) {
+                const p = this.players[player];
+                
+                //
