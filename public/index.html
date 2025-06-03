@@ -294,7 +294,7 @@
         <!-- Main Menu -->
         <div class="menu-content" id="menuContent">
             <h1 class="menu-title">MOBILE FIGHTER</h1>
-            <button class="menu-btn" onclick="createLobby()">🌐 Online Multiplayer</button>
+            <button class="menu-btn" onclick="createLobby()">🌐 Create Lobby</button>
             <button class="menu-btn secondary-btn" onclick="startPracticeMode()">🥊 Practice Mode</button>
         </div>
         
@@ -784,4 +784,6 @@
             updatePhysics(player) {
                 const p = this.players[player];
                 
-                //
+                // Gravity
+                p.velocityY += 0.8;
+                p.y += p.velocityY;
