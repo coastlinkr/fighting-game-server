@@ -367,55 +367,92 @@
                 this.socket = io(serverUrl);
                 
                 this.socket.on('connect', () => {
+                    console.log('Connected to server');
                     this.connected = true;
                     this.updateConnectionStatus(true);
                 });
                 
                 this.socket.on('disconnect', () => {
+                    console.log('Disconnected from server');
                     this.connected = false;
                     this.updateConnectionStatus(false);
                 });
                 
                 this.socket.on('lobby_created', (data) => {
-                    this.lobbyCode = data.lobbyCode;
+                    console.log('Lobby created:', data);
+                    this.lobbyCode = data.lobbyId;
                     this.isHost = true;
                     this.updateLobbyDisplay();
                 });
                 
                 this.socket.on('lobby_joined', (data) => {
-                    this.lobbyCode = data.lobbyCode;
+                    console.log('Lobby joined:', data);
+                    this.lobbyCode = data.lobbyId;
                     this.isHost = false;
                     this.updateLobbyDisplay();
                     document.getElementById('readyBtn').style.display = 'block';
                 });
                 
-                this.socket.on('player_joined', (data) => {
-                    this.updateLobbyDisplay();
-                    document.getElementById('readyBtn').style.display = 'block';
+                this.socket.on('lobby_updated', (data) => {
+                    console.log('Lobby updated:', data);
+                    if (data.players) {
+                        const player1 = data.players.find(p => p.isHost);
+                        const player2 = data.players.find(p => !p.isHost);
+                        
+                        if (this.isHost) {
+                            this.playerReady = player1 ? player1.ready : false;
+                            this.opponentReady = player2 ? player2.ready : false;
+                        } else {
+                            this.playerReady = player2 ? player2.ready : false;
+                            this.opponentReady = player1 ? player1.ready : false;
+                        }
+                        
+                        this.updateReadyDisplay();
+                        
+                        if (data.players.length === 2) {
+                            document.getElementById('readyBtn').style.display = 'block';
+                        }
+                    }
                 });
                 
-                this.socket.on('ready_status', (data) => {
-                    this.playerReady = data.player1Ready;
-                    this.opponentReady = data.player2Ready;
-                    this.updateReadyDisplay();
-                });
-                
-                this.socket.on('game_start', () => {
+                this.socket.on('game_start', (data) => {
+                    console.log('Game starting!', data);
                     this.startMultiplayerGame();
                 });
                 
-                this.socket.on('player_state', (data) => {
-                    if (data.playerId !== this.playerId && this.players[2]) {
+                this.socket.on('game_input', (data) => {
+                    if (data.playerId !== this.socket.id && this.players[2]) {
+                        this.processOpponentInput(data);
+                    }
+                });
+                
+                this.socket.on('game_update', (data) => {
+                    if (data.playerId !== this.socket.id && this.players[2]) {
                         this.players[2].x = data.x;
                         this.players[2].y = data.y;
                         this.players[2].direction = data.direction;
                         this.players[2].currentAction = data.action;
                         this.players[2].health = data.health;
+                        this.updateHealthDisplay();
+                    }
+                });
+                
+                this.socket.on('player_disconnected', (data) => {
+                    console.log('Player disconnected');
+                    this.opponentReady = false;
+                    this.updateReadyDisplay();
+                    if (this.gameState === 'fighting') {
+                        this.endGame('Opponent disconnected!');
                     }
                 });
                 
                 this.socket.on('lobby_error', (data) => {
-                    alert(data.message);
+                    alert(data.error || 'Error joining lobby');
+                    this.backToMenu();
+                });
+                
+                this.socket.on('game_over', (data) => {
+                    this.endGame(data.winner || 'Game Over!');
                 });
             }
             
@@ -590,11 +627,11 @@
                 const player1Status = document.getElementById('player1Ready');
                 const player2Status = document.getElementById('player2Ready');
                 
-                player1Status.textContent = `Player 1: ${this.playerReady ? 'Ready!' : 'Not Ready'}`;
-                player1Status.className = this.playerReady ? 'ready-true' : 'ready-false';
+                player1Status.textContent = `Player 1: ${this.isHost ? (this.playerReady ? 'Ready!' : 'Not Ready') : (this.opponentReady ? 'Ready!' : 'Not Ready')}`;
+                player1Status.className = (this.isHost ? this.playerReady : this.opponentReady) ? 'ready-true' : 'ready-false';
                 
-                player2Status.textContent = `Player 2: ${this.opponentReady ? 'Ready!' : 'Not Ready'}`;
-                player2Status.className = this.opponentReady ? 'ready-true' : 'ready-false';
+                player2Status.textContent = `Player 2: ${!this.isHost ? (this.playerReady ? 'Ready!' : 'Not Ready') : (this.opponentReady ? 'Ready!' : 'Not Ready')}`;
+                player2Status.className = (!this.isHost ? this.playerReady : this.opponentReady) ? 'ready-true' : 'ready-false';
                 
                 const readyBtn = document.getElementById('readyBtn');
                 readyBtn.textContent = this.playerReady ? 'Not Ready' : 'Ready Up!';
@@ -602,10 +639,12 @@
             }
             
             toggleReady() {
+                if (!this.connected || !this.lobbyCode) return;
+                
                 this.playerReady = !this.playerReady;
-                this.socket.emit('toggle_ready', {
-                    playerId: this.playerId,
-                    ready: this.playerReady
+                this.socket.emit('player_ready', {
+                    ready: this.playerReady,
+                    playerId: this.socket.id
                 });
                 this.updateReadyDisplay();
             }
@@ -761,6 +800,43 @@
                 }
             }
             
+            processOpponentInput(data) {
+                const opponent = this.players[2];
+                if (!opponent) return;
+                
+                // Process movement
+                if (data.moveLeft) {
+                    opponent.x -= opponent.speed;
+                    opponent.direction = -1;
+                }
+                if (data.moveRight) {
+                    opponent.x += opponent.speed;
+                    opponent.direction = 1;
+                }
+                
+                // Process actions
+                if (data.action) {
+                    opponent.currentAction = data.action;
+                    opponent.actionTimer = data.action === 'special' ? 60 : (data.action === 'kick' ? 40 : 30);
+                    
+                    // Check if the attack hits player 1
+                    const distance = Math.abs(opponent.x - this.players[1].x);
+                    const attackRange = data.action === 'special' ? 120 : 80;
+                    
+                    if (distance < attackRange) {
+                        const damage = data.action === 'special' ? 25 : (data.action === 'kick' ? 15 : 10);
+                        this.players[1].health -= damage;
+                        this.players[1].health = Math.max(0, this.players[1].health);
+                        this.updateHealthDisplay();
+                        
+                        if (this.players[1].health <= 0) {
+                            this.socket.emit('game_over', { winner: 'Player 2' });
+                            this.endGame('Player 2 Wins!');
+                        }
+                    }
+                }
+            }
+            
             updatePhysics(player) {
                 const p = this.players[player];
                 
@@ -846,6 +922,33 @@
                 this.ctx.restore();
             }
             
+            sendMultiplayerUpdate() {
+                if (this.isMultiplayer && this.connected && this.gameState === 'fighting') {
+                    // Send current input state
+                    const inputData = {
+                        moveLeft: this.keys['ArrowLeft'] || this.keys['KeyA'] || this.touches['moveLeft'],
+                        moveRight: this.keys['ArrowRight'] || this.keys['KeyD'] || this.touches['moveRight'],
+                        jump: this.keys['Space'] || this.keys['ArrowUp'] || this.keys['KeyW'],
+                        action: this.players[1].currentAction !== 'idle' ? this.players[1].currentAction : null
+                    };
+                    
+                    // Send input if any action is happening
+                    if (inputData.moveLeft || inputData.moveRight || inputData.jump || inputData.action) {
+                        this.socket.emit('game_input', inputData);
+                    }
+                    
+                    // Also send periodic state updates
+                    const stateData = {
+                        x: this.players[1].x,
+                        y: this.players[1].y,
+                        direction: this.players[1].direction,
+                        action: this.players[1].currentAction,
+                        health: this.players[1].health
+                    };
+                    this.socket.emit('game_update', stateData);
+                }
+            }
+            
             render() {
                 // Clear canvas
                 this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
@@ -865,19 +968,6 @@
                     // Draw players
                     this.drawPlayer(1);
                     this.drawPlayer(2);
-                    
-                    // Send player state if multiplayer
-                    if (this.isMultiplayer && this.connected) {
-                        const playerData = {
-                            playerId: this.playerId,
-                            x: this.players[1].x,
-                            y: this.players[1].y,
-                            direction: this.players[1].direction,
-                            action: this.players[1].currentAction,
-                            health: this.players[1].health
-                        };
-                        this.socket.emit('player_update', playerData);
-                    }
                 }
             }
             
@@ -900,33 +990,55 @@
                 // Render
                 this.render();
                 
+                // Send multiplayer updates
+                if (this.gameState === 'fighting' && this.isMultiplayer) {
+                    this.sendMultiplayerUpdate();
+                }
+                
                 // Continue loop
                 requestAnimationFrame(this.gameLoop);
             }
         }
 
-        // Initialize game when page loads
+        // Initialize game instance
         let game;
+
+        // Global function to create a lobby
+        window.createLobby = function() {
+            if (game && game.connected) {
+                game.createLobby();
+            } else {
+                alert('Game not connected. Please refresh and try again.');
+            }
+        }
+
+        // Global function to start practice mode
+        window.startPracticeMode = function() {
+            if (game) {
+                game.startPracticeMode();
+            }
+        }
+
+        // Global function to toggle ready status
+        window.toggleReady = function() {
+            if (game) {
+                game.toggleReady();
+            }
+        }
+
+        // Global function to go back to menu
+        window.backToMenu = function() {
+            if (game) {
+                game.backToMenu();
+            }
+        }
+
+        // Initialize game when page loads
         window.addEventListener('load', () => {
             game = new FightingGameEngine();
+            // Make game globally accessible for debugging
+            window.game = game;
         });
-
-        // Global functions for button clicks
-        function createLobby() {
-            if (game) game.createLobby();
-        }
-
-        function startPracticeMode() {
-            if (game) game.startPracticeMode();
-        }
-
-        function toggleReady() {
-            if (game) game.toggleReady();
-        }
-
-        function backToMenu() {
-            if (game) game.backToMenu();
-        }
     </script>
 </body>
 </html>
