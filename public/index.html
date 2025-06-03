@@ -275,23 +275,23 @@
         <div class="menu-content" id="menuContent">
             <h1 class="menu-title">MOBILE FIGHTER</h1>
             <button class="menu-btn" onclick="createLobby()">🌐 Create Lobby</button>
+            <button class="menu-btn secondary-btn" onclick="showJoinLobby()">🔗 Join Lobby</button>
             <button class="menu-btn secondary-btn" onclick="startPracticeMode()">🥊 Practice Mode</button>
         </div>
         
         <!-- Lobby Screen -->
-        <div class="lobby-content" id="lobbyContent" style="display: none;">
-            <h2 class="menu-title" style="font-size: 6vw;">LOBBY</h2>
-            <div class="lobby-info" id="lobbyInfo">
-                <div style="font-size: 4vh; margin: 2vh 0;">Connecting...</div>
+        <div class="lobby-content" id="joinLobbyContent" style="display: none;">
+            <h2 class="menu-title" style="font-size: 6vw;">JOIN LOBBY</h2>
+            <div style="margin: 4vh 0;">
+                <input type="text" id="lobbyCodeInput" placeholder="Enter 4-digit code" maxlength="4" 
+                       style="width: 200px; padding: 2vh; font-size: 4vh; text-align: center; 
+                              background: rgba(255,255,255,0.1); border: 2px solid #FFD700; 
+                              border-radius: 1vh; color: white;">
             </div>
-            <div class="ready-status" id="readyStatus">
-                <div id="player1Ready">Player 1: Not Ready</div>
-                <div id="player2Ready">Player 2: Waiting...</div>
-            </div>
-            <button class="menu-btn" id="readyBtn" onclick="toggleReady()" style="display: none;">Ready Up!</button>
+            <button class="menu-btn" onclick="joinLobbyFromInput()">Join Game</button>
             <button class="menu-btn danger-btn" onclick="backToMenu()">← Back to Menu</button>
         </div>
-    </div>
+    
     
     <!-- Connection Status -->
     <div class="connection-status disconnected" id="connectionStatus" style="display: none;">
@@ -683,29 +683,30 @@
                 }, 1000);
             }
             
-            backToMenu() {
-                this.gameState = 'menu';
-                document.getElementById('menuContent').style.display = 'block';
-                document.getElementById('lobbyContent').style.display = 'none';
-                document.getElementById('gameOverlay').style.display = 'flex';
-                document.getElementById('touchControls').style.display = 'none';
-                document.getElementById('gameHud').style.display = 'none';
-                document.getElementById('connectionStatus').style.display = 'none';
-                
-                if (this.gameTimer) {
-                    clearInterval(this.gameTimer);
-                    this.gameTimer = null;
-                }
-                
-                if (this.lobbyCode) {
-                    this.socket.emit('leave_lobby', { playerId: this.playerId });
-                    this.lobbyCode = null;
-                    this.playerReady = false;
-                    this.opponentReady = false;
-                }
-                
-                window.location.hash = '';
+        backToMenu() {
+            this.gameState = 'menu';
+            document.getElementById('menuContent').style.display = 'block';
+            document.getElementById('lobbyContent').style.display = 'none';
+            document.getElementById('joinLobbyContent').style.display = 'none';
+            document.getElementById('gameOverlay').style.display = 'flex';
+            document.getElementById('touchControls').style.display = 'none';
+            document.getElementById('gameHud').style.display = 'none';
+            document.getElementById('connectionStatus').style.display = 'none';
+            
+            if (this.gameTimer) {
+                clearInterval(this.gameTimer);
+                this.gameTimer = null;
             }
+            
+            if (this.lobbyCode) {
+                this.socket.emit('leave_lobby', { playerId: this.playerId });
+                this.lobbyCode = null;
+                this.playerReady = false;
+                this.opponentReady = false;
+            }
+            
+            window.location.hash = '';
+        }
             
             handleInput(player) {
                 const p = this.players[player];
@@ -713,55 +714,177 @@
                 
                 // Movement controls
                 let moving = false;
-                if ((player === 1 && (this.keys['ArrowLeft'] || this.keys['KeyA'] || this.touches['moveLeft'])) ||
-                    (player === 2 && (this.keys['ArrowLeft'] || this.keys['KeyA']) && !this.isMultiplayer)) {
-                    p.x -= p.speed;
-                    p.direction = -1;
-                    moving = true;
-                }
-                if ((player === 1 && (this.keys['ArrowRight'] || this.keys['KeyD'] || this.touches['moveRight'])) ||
-                    (player === 2 && (this.keys['ArrowRight'] || this.keys['KeyD']) && !this.isMultiplayer)) {
-                    p.x += p.speed;
-                    p.direction = 1;
-                    moving = true;
-                }
                 
-                // Jump
-                if ((player === 1 && (this.keys['Space'] || this.keys['ArrowUp'] || this.keys['KeyW'])) ||
-                    (player === 2 && (this.keys['ArrowUp'] || this.keys['KeyW']) && !this.isMultiplayer)) {
-                    if (p.onGround) {
-                        p.velocityY = -p.jumpPower;
-                        p.onGround = false;
+                if (this.isMultiplayer) {
+                    // In multiplayer, only control player 1
+                    if (player === 1) {
+                        if (this.joystickInput.left || this.keys['ArrowLeft'] || this.keys['KeyA']) {
+                            p.x -= p.speed;
+                            p.direction = -1;
+                            moving = true;
+                        }
+                        if (this.joystickInput.right || this.keys['ArrowRight'] || this.keys['KeyD']) {
+                            p.x += p.speed;
+                            p.direction = 1;
+                            moving = true;
+                        }
+                        
+                        // Jump with up input
+                        if (this.joystickInput.up || this.keys['Space'] || this.keys['ArrowUp'] || this.keys['KeyW']) {
+                            if (p.onGround) {
+                                p.velocityY = -p.jumpPower;
+                                p.onGround = false;
+                            }
+                        }
+                        
+                        // Crouch with down input
+                        p.crouching = this.joystickInput.down || this.keys['ArrowDown'] || this.keys['KeyS'];
+                    }
+                    // Player 2 is controlled by network input in multiplayer
+                } else {
+                    // Practice mode - separate controls for each player
+                    if (player === 1) {
+                        // Player 1 uses WASD and joystick
+                        if (this.joystickInput.left || this.keys['KeyA']) {
+                            p.x -= p.speed;
+                            p.direction = -1;
+                            moving = true;
+                        }
+                        if (this.joystickInput.right || this.keys['KeyD']) {
+                            p.x += p.speed;
+                            p.direction = 1;
+                            moving = true;
+                        }
+                        
+                        if (this.joystickInput.up || this.keys['KeyW']) {
+                            if (p.onGround) {
+                                p.velocityY = -p.jumpPower;
+                                p.onGround = false;
+                            }
+                        }
+                        
+                        p.crouching = this.joystickInput.down || this.keys['KeyS'];
+                    } else if (player === 2) {
+                        // Player 2 uses arrow keys only in practice mode
+                        if (this.keys['ArrowLeft']) {
+                            p.x -= p.speed;
+                            p.direction = -1;
+                            moving = true;
+                        }
+                        if (this.keys['ArrowRight']) {
+                            p.x += p.speed;
+                            p.direction = 1;
+                            moving = true;
+                        }
+                        
+                        if (this.keys['ArrowUp']) {
+                            if (p.onGround) {
+                                p.velocityY = -p.jumpPower;
+                                p.onGround = false;
+                            }
+                        }
+                        
+                        p.crouching = this.keys['ArrowDown'];
                     }
                 }
                 
                 // Attack controls
-                if ((player === 1 && (this.keys['KeyZ'] || this.touches['punch'])) ||
-                    (player === 2 && this.keys['Numpad1'] && !this.isMultiplayer)) {
-                    if (now - p.lastAttackTime > 300) {
-                        this.performAttack(player, 'punch');
-                        p.lastAttackTime = now;
-                    }
+                if (this.isMultiplayer && player === 2) {
+                    // Skip attack input for player 2 in multiplayer
+                    return;
                 }
-                if ((player === 1 && (this.keys['KeyX'] || this.touches['kick'])) ||
-                    (player === 2 && this.keys['Numpad2'] && !this.isMultiplayer)) {
-                    if (now - p.lastAttackTime > 400) {
-                        this.performAttack(player, 'kick');
-                        p.lastAttackTime = now;
+                
+                // Practice mode attack controls
+                if (!this.isMultiplayer) {
+                    if (player === 1) {
+                        // Player 1 attacks with ZXCV and touch buttons
+                        if (this.touches['lightPunch'] || this.keys['KeyZ']) {
+                            if (now - p.lastAttackTime > 250) {
+                                this.performAttack(player, 'lightPunch');
+                                p.lastAttackTime = now;
+                            }
+                        }
+                        if (this.touches['heavyPunch'] || this.keys['KeyX']) {
+                            if (now - p.lastAttackTime > 350) {
+                                this.performAttack(player, 'heavyPunch');
+                                p.lastAttackTime = now;
+                            }
+                        }
+                        if (this.touches['lightKick'] || this.keys['KeyC']) {
+                            if (now - p.lastAttackTime > 300) {
+                                this.performAttack(player, 'lightKick');
+                                p.lastAttackTime = now;
+                            }
+                        }
+                        if (this.touches['heavyKick'] || this.keys['KeyV']) {
+                            if (now - p.lastAttackTime > 400) {
+                                this.performAttack(player, 'heavyKick');
+                                p.lastAttackTime = now;
+                            }
+                        }
+                    } else if (player === 2) {
+                        // Player 2 attacks with numpad in practice mode
+                        if (this.keys['Numpad1']) {
+                            if (now - p.lastAttackTime > 250) {
+                                this.performAttack(player, 'lightPunch');
+                                p.lastAttackTime = now;
+                            }
+                        }
+                        if (this.keys['Numpad2']) {
+                            if (now - p.lastAttackTime > 350) {
+                                this.performAttack(player, 'heavyPunch');
+                                p.lastAttackTime = now;
+                            }
+                        }
+                        if (this.keys['Numpad3']) {
+                            if (now - p.lastAttackTime > 300) {
+                                this.performAttack(player, 'lightKick');
+                                p.lastAttackTime = now;
+                            }
+                        }
+                        if (this.keys['Numpad4']) {
+                            if (now - p.lastAttackTime > 400) {
+                                this.performAttack(player, 'heavyKick');
+                                p.lastAttackTime = now;
+                            }
+                        }
                     }
-                }
-                if ((player === 1 && (this.keys['KeyC'] || this.touches['special'])) ||
-                    (player === 2 && this.keys['Numpad3'] && !this.isMultiplayer)) {
-                    if (now - p.lastAttackTime > 800) {
-                        this.performAttack(player, 'special');
-                        p.lastAttackTime = now;
+                } else {
+                    // Multiplayer mode - only player 1 can attack
+                    if (player === 1) {
+                        if (this.touches['lightPunch'] || this.keys['KeyZ']) {
+                            if (now - p.lastAttackTime > 250) {
+                                this.performAttack(player, 'lightPunch');
+                                p.lastAttackTime = now;
+                            }
+                        }
+                        if (this.touches['heavyPunch'] || this.keys['KeyX']) {
+                            if (now - p.lastAttackTime > 350) {
+                                this.performAttack(player, 'heavyPunch');
+                                p.lastAttackTime = now;
+                            }
+                        }
+                        if (this.touches['lightKick'] || this.keys['KeyC']) {
+                            if (now - p.lastAttackTime > 300) {
+                                this.performAttack(player, 'lightKick');
+                                p.lastAttackTime = now;
+                            }
+                        }
+                        if (this.touches['heavyKick'] || this.keys['KeyV']) {
+                            if (now - p.lastAttackTime > 400) {
+                                this.performAttack(player, 'heavyKick');
+                                p.lastAttackTime = now;
+                            }
+                        }
                     }
                 }
                 
-                // Update action
+                // Update action state
                 if (p.actionTimer <= 0) {
                     if (moving) {
                         p.currentAction = 'walking';
+                    } else if (p.crouching) {
+                        p.currentAction = 'crouching';
                     } else {
                         p.currentAction = 'idle';
                     }
@@ -769,32 +892,62 @@
                 
                 // Boundary check
                 p.x = Math.max(p.width/2, Math.min(this.canvasWidth - p.width/2, p.x));
-            }
-            
+            }            
             performAttack(playerNum, attackType) {
                 const attacker = this.players[playerNum];
                 const target = this.players[playerNum === 1 ? 2 : 1];
                 
                 attacker.currentAction = attackType;
-                attacker.actionTimer = attackType === 'special' ? 60 : (attackType === 'kick' ? 40 : 30);
+                
+                // Set action timer based on attack type
+                const actionTimers = {
+                    lightPunch: 20,
+                    heavyPunch: 30,
+                    lightKick: 25,
+                    heavyKick: 35
+                };
+                attacker.actionTimer = actionTimers[attackType] || 30;
                 
                 // Check if attack hits
                 const distance = Math.abs(attacker.x - target.x);
-                const attackRange = attackType === 'special' ? 120 : 80;
+                const attackRanges = {
+                    lightPunch: 70,
+                    heavyPunch: 80,
+                    lightKick: 85,
+                    heavyKick: 95
+                };
+                const attackRange = attackRanges[attackType] || 80;
                 
                 if (distance < attackRange) {
-                    const damage = attackType === 'special' ? 25 : (attackType === 'kick' ? 15 : 10);
+                    const damages = {
+                        lightPunch: 5,
+                        heavyPunch: 10,
+                        lightKick: 7,
+                        heavyKick: 12
+                    };
+                    const damage = damages[attackType] || 10;
+                    
                     target.health -= damage;
                     target.health = Math.max(0, target.health);
                     
                     // Knockback
-                    const knockback = attackType === 'special' ? 30 : 15;
+                    const knockbacks = {
+                        lightPunch: 10,
+                        heavyPunch: 20,
+                        lightKick: 15,
+                        heavyKick: 25
+                    };
+                    const knockback = knockbacks[attackType] || 15;
+                    
                     target.x += attacker.direction * knockback;
                     target.x = Math.max(target.width/2, Math.min(this.canvasWidth - target.width/2, target.x));
                     
                     this.updateHealthDisplay();
                     
                     if (target.health <= 0) {
+                        if (this.isMultiplayer) {
+                            this.socket.emit('game_over', { winner: `Player ${playerNum}` });
+                        }
                         this.endGame(`Player ${playerNum} Wins!`);
                     }
                 }
@@ -1011,34 +1164,57 @@
                 alert('Game not connected. Please refresh and try again.');
             }
         }
-
+        
         // Global function to start practice mode
         window.startPracticeMode = function() {
             if (game) {
                 game.startPracticeMode();
             }
         }
-
+        
         // Global function to toggle ready status
         window.toggleReady = function() {
             if (game) {
                 game.toggleReady();
             }
         }
-
+        
         // Global function to go back to menu
         window.backToMenu = function() {
             if (game) {
                 game.backToMenu();
             }
         }
-
+        
+        // Global function to show join lobby screen
+        window.showJoinLobby = function() {
+            if (game) {
+                document.getElementById('menuContent').style.display = 'none';
+                document.getElementById('joinLobbyContent').style.display = 'block';
+                document.getElementById('lobbyCodeInput').value = '';
+                document.getElementById('lobbyCodeInput').focus();
+            }
+        }
+        
+        // Global function to join lobby from input
+        window.joinLobbyFromInput = function() {
+            if (game) {
+                const code = document.getElementById('lobbyCodeInput').value.trim();
+                if (code && code.match(/^\d{4}$/)) {
+                    game.joinLobby(code);
+                } else {
+                    alert('Please enter a valid 4-digit code');
+                }
+            }
+        }
+        
         // Initialize game when page loads
         window.addEventListener('load', () => {
             game = new FightingGameEngine();
             // Make game globally accessible for debugging
             window.game = game;
         });
-    </script>
+        
+</script>
 </body>
 </html>
