@@ -229,26 +229,6 @@
             padding: 1vh 2vw;
             border-radius: 1vh;
         }
-        @media (max-height: 500px) {
-            .control-btn {
-                width: 12vw;
-                height: 12vw;
-                font-size: 3vw;
-            }
-            .special-btn {
-                font-size: 2.5vw;
-            }
-        }
-        @media (orientation: landscape) and (max-height: 500px) {
-            .controls {
-                bottom: 1vh;
-            }
-            .control-btn {
-                width: 10vh;
-                height: 10vh;
-                font-size: 2.5vh;
-            }
-        }
     </style>
 </head>
 <body>
@@ -331,7 +311,7 @@
                 this.setupEventListeners();
                 
                 // Game state
-                this.gameState = 'menu'; // 'menu', 'lobby', 'fighting'
+                this.gameState = 'menu';
                 this.gameTime = 60;
                 this.gameTimer = null;
                 
@@ -787,3 +767,166 @@
                 // Gravity
                 p.velocityY += 0.8;
                 p.y += p.velocityY;
+                
+                // Ground collision
+                const groundY = this.canvasHeight * 0.7;
+                if (p.y >= groundY) {
+                    p.y = groundY;
+                    p.velocityY = 0;
+                    p.onGround = true;
+                }
+                
+                // Action timer
+                if (p.actionTimer > 0) {
+                    p.actionTimer--;
+                }
+            }
+            
+            updateHealthDisplay() {
+                const player1Health = document.getElementById('player1Health');
+                const player2Health = document.getElementById('player2Health');
+                
+                if (player1Health && this.players[1]) {
+                    const healthPercentage = (this.players[1].health / this.players[1].maxHealth) * 100;
+                    player1Health.style.width = healthPercentage + '%';
+                }
+                
+                if (player2Health && this.players[2]) {
+                    const healthPercentage = (this.players[2].health / this.players[2].maxHealth) * 100;
+                    player2Health.style.width = healthPercentage + '%';
+                }
+            }
+            
+            endGame(message) {
+                if (this.gameTimer) {
+                    clearInterval(this.gameTimer);
+                    this.gameTimer = null;
+                }
+                
+                alert(message);
+                this.backToMenu();
+            }
+            
+            drawPlayer(player) {
+                const p = this.players[player];
+                if (!p) return;
+                
+                this.ctx.save();
+                
+                // Draw shadow
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                this.ctx.ellipse(p.x, this.canvasHeight * 0.7 + 10, p.width * 0.6, 10, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Draw player
+                this.ctx.fillStyle = p.color;
+                this.ctx.fillRect(p.x - p.width/2, p.y - p.height, p.width, p.height);
+                
+                // Draw face
+                this.ctx.fillStyle = '#FFE0BD';
+                this.ctx.fillRect(p.x - p.width/3, p.y - p.height + 10, p.width * 0.66, p.height * 0.3);
+                
+                // Draw eyes
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(p.x - p.width/4, p.y - p.height + 20, 5, 5);
+                this.ctx.fillRect(p.x + p.width/8, p.y - p.height + 20, 5, 5);
+                
+                // Draw action effects
+                if (p.currentAction === 'punch' && p.actionTimer > 20) {
+                    this.ctx.fillStyle = 'rgba(255, 255, 0, 0.7)';
+                    this.ctx.fillRect(p.x + (p.direction * p.width/2), p.y - p.height/2, p.direction * 30, 20);
+                } else if (p.currentAction === 'kick' && p.actionTimer > 30) {
+                    this.ctx.fillStyle = 'rgba(255, 165, 0, 0.7)';
+                    this.ctx.fillRect(p.x + (p.direction * p.width/2), p.y - p.height/3, p.direction * 40, 25);
+                } else if (p.currentAction === 'special' && p.actionTimer > 40) {
+                    this.ctx.fillStyle = 'rgba(255, 0, 255, 0.8)';
+                    this.ctx.fillRect(p.x + (p.direction * p.width/2), p.y - p.height + 10, p.direction * 60, p.height - 20);
+                }
+                
+                this.ctx.restore();
+            }
+            
+            render() {
+                // Clear canvas
+                this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+                
+                if (this.gameState === 'fighting') {
+                    // Draw background
+                    const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvasHeight);
+                    gradient.addColorStop(0, '#87CEEB');
+                    gradient.addColorStop(1, '#98FB98');
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+                    
+                    // Draw ground
+                    this.ctx.fillStyle = '#8B4513';
+                    this.ctx.fillRect(0, this.canvasHeight * 0.7, this.canvasWidth, this.canvasHeight * 0.3);
+                    
+                    // Draw players
+                    this.drawPlayer(1);
+                    this.drawPlayer(2);
+                    
+                    // Send player state if multiplayer
+                    if (this.isMultiplayer && this.connected) {
+                        const playerData = {
+                            playerId: this.playerId,
+                            x: this.players[1].x,
+                            y: this.players[1].y,
+                            direction: this.players[1].direction,
+                            action: this.players[1].currentAction,
+                            health: this.players[1].health
+                        };
+                        this.socket.emit('player_update', playerData);
+                    }
+                }
+            }
+            
+            gameLoop(currentTime) {
+                const deltaTime = currentTime - this.lastTime;
+                this.lastTime = currentTime;
+                
+                if (this.gameState === 'fighting') {
+                    // Handle input
+                    this.handleInput(1);
+                    if (!this.isMultiplayer) {
+                        this.handleInput(2);
+                    }
+                    
+                    // Update physics
+                    this.updatePhysics(1);
+                    this.updatePhysics(2);
+                }
+                
+                // Render
+                this.render();
+                
+                // Continue loop
+                requestAnimationFrame(this.gameLoop);
+            }
+        }
+
+        // Initialize game when page loads
+        let game;
+        window.addEventListener('load', () => {
+            game = new FightingGameEngine();
+        });
+
+        // Global functions for button clicks
+        function createLobby() {
+            if (game) game.createLobby();
+        }
+
+        function startPracticeMode() {
+            if (game) game.startPracticeMode();
+        }
+
+        function toggleReady() {
+            if (game) game.toggleReady();
+        }
+
+        function backToMenu() {
+            if (game) game.backToMenu();
+        }
+    </script>
+</body>
+</html>
