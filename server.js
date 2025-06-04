@@ -10,8 +10,10 @@ const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
         origin: "*",
-        methods: ["GET", "POST"]
-    }
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    transports: ['websocket', 'polling']
 });
 
 // Middleware
@@ -157,8 +159,8 @@ io.on('connection', (socket) => {
 
     // Join lobby
     socket.on('join_lobby', (data) => {
-        const { lobbyId } = data;
-        const lobby = lobbies.get(lobbyId);
+        const { lobbyCode } = data;
+        const lobby = lobbies.get(lobbyCode);
         
         if (!lobby) {
             socket.emit('lobby_error', { error: 'Lobby not found' });
@@ -167,18 +169,18 @@ io.on('connection', (socket) => {
 
         const result = lobby.addPlayer(socket.id, socket);
         if (result.success) {
-            players.get(socket.id).lobbyId = lobbyId;
-            socket.join(lobbyId);
+            players.get(socket.id).lobbyId = lobbyCode;
+            socket.join(lobbyCode);
             
             socket.emit('lobby_joined', {
-                lobbyId: lobbyId,
+                lobbyId: lobbyCode,
                 isHost: false,
                 lobbyState: lobby.getLobbyState()
             });
             
             lobby.broadcastToLobby('lobby_updated', lobby.getLobbyState());
             
-            console.log(`Player ${socket.id} joined lobby ${lobbyId}`);
+            console.log(`Player ${socket.id} joined lobby ${lobbyCode}`);
         } else {
             socket.emit('lobby_error', result);
         }
@@ -345,7 +347,9 @@ setInterval(() => {
 
 // Start server
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`🎮 Fighting Game Server running on port ${PORT}`);
-    console.log(`📊 Stats available at http://localhost:${PORT}/api/stats`);
+const HOST = '0.0.0.0'; // Important for Railway
+
+server.listen(PORT, HOST, () => {
+    console.log(`🎮 Fighting Game Server running on ${HOST}:${PORT}`);
+    console.log(`📊 Stats available at http://${HOST}:${PORT}/api/stats`);
 });
