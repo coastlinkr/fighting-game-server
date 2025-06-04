@@ -283,11 +283,40 @@
         <div class="lobby-content" id="joinLobbyContent" style="display: none;">
             <h2 class="menu-title" style="font-size: 6vw;">JOIN LOBBY</h2>
             <div style="margin: 4vh 0;">
-                <input type="text" id="lobbyCodeInput" placeholder="Enter 4-digit code" maxlength="4" 
-                       style="width: 200px; padding: 2vh; font-size: 4vh; text-align: center; 
-                              background: rgba(255,255,255,0.1); border: 2px solid #FFD700; 
-                              border-radius: 1vh; color: white;">
+
+                input[type="text"] {
+                    width: 200px;
+                    padding: 2vh;
+                    font-size: 4vh;
+                    text-align: center;
+                    background: rgba(255,255,255,0.9);
+                    border: 2px solid #FFD700;
+                    border-radius: 1vh;
+                    color: #333;
+                    outline: none;
+                }
+                
+                input[type="text"]:focus {
+                    border-color: #FFA500;
+                    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+                }
+                
             </div>
+
+            <!-- Actual Lobby Screen (this was missing!) -->
+<div class="lobby-content" id="lobbyContent" style="display: none;">
+    <h2 class="menu-title" style="font-size: 6vw;">LOBBY</h2>
+    <div class="lobby-info" id="lobbyInfo">
+        <div style="font-size: 4vh; margin: 2vh 0;">Waiting for players...</div>
+    </div>
+    <div class="ready-status">
+        <div id="player1Ready" class="ready-false">Player 1: Not Ready</div>
+        <div id="player2Ready" class="ready-false">Player 2: Waiting...</div>
+    </div>
+    <button class="menu-btn" id="readyBtn" onclick="toggleReady()" style="display: none;">Ready Up!</button>
+    <button class="menu-btn danger-btn" onclick="backToMenu()">← Leave Lobby</button>
+</div>
+
             <button class="menu-btn" onclick="joinLobbyFromInput()">Join Game</button>
             <button class="menu-btn danger-btn" onclick="backToMenu()">← Back to Menu</button>
         </div>
