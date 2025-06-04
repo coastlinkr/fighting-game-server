@@ -159,7 +159,7 @@ io.on('connection', (socket) => {
 
     // Join lobby
     socket.on('join_lobby', (data) => {
-        const { lobbyCode } = data;
+const lobbyCode = data.lobbyCode || data.lobbyId;
         const lobby = lobbies.get(lobbyCode);
         
         if (!lobby) {
