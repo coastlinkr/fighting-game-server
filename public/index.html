@@ -406,11 +406,17 @@
                 console.log('Connecting to server:', serverUrl);
                 this.socket = io(serverUrl);
                 
-                this.socket.on('connect', () => {
-                    console.log('Connected to server with id:', this.socket.id);
-                    this.connected = true;
-                    this.updateConnectionStatus(true);
-                });
+this.socket.on('connect', () => {
+    console.log('Connected to server with id:', this.socket.id);
+    this.connected = true;
+    this.updateConnectionStatus(true);
+    
+    // Check if we have a pending join
+    if (this.pendingJoinCode) {
+        this.joinLobby(this.pendingJoinCode);
+        this.pendingJoinCode = null;
+    }
+});
                 
                 this.socket.on('disconnect', () => {
                     console.log('Disconnected from server');
@@ -605,25 +611,21 @@
                }
            }
            
-           checkForLobbyJoin() {
-               const hash = window.location.hash.substring(1);
-               if (hash && hash.match(/^\d{4}$/)) {
-                   console.log('Found lobby code in URL:', hash);
-                   
-                   const attemptJoin = () => {
-                       if (this.connected) {
-                           console.log('Connected, joining lobby:', hash);
-                           this.joinLobby(hash);
-                       } else {
-                           console.log('Not connected yet, waiting...');
-                           setTimeout(attemptJoin, 500);
-                       }
-                   };
-                   
-                   // Give the socket a moment to establish connection
-                   setTimeout(attemptJoin, 100);
-               }
-           }
+checkForLobbyJoin() {
+    const hash = window.location.hash.substring(1);
+    if (hash && hash.match(/^\d{4}$/)) {
+        console.log('Found lobby code in URL:', hash);
+        
+        // Store the code to try joining
+        this.pendingJoinCode = hash;
+        
+        // If already connected, join immediately
+        if (this.connected) {
+            this.joinLobby(hash);
+        }
+        // Otherwise the connect handler will check pendingJoinCode
+    }
+}
            
            createLobby() {
                if (!this.connected) {
